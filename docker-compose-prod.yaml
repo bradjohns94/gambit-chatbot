@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  # Core API Instance
+  gambit_core_prod:
+    networks:
+      - gambit
+    image: gambit-core:${GAMBIT_CORE_DEPLOY_VERSION}
+    restart: always
+    ports:
+      - ${GAMBIT_CORE_PORT}:8080
+    environment:
+      - GAMBIT_CORE_VERSION=${GAMBIT_CORE_DEPLOY_VERSION}
+      - BOT_NAME=${BOT_NAME}
+
+  # Slack Client Passthrough
+  slack_client_prod:
+    networks:
+      - gambit
+    image: slack-client:${SLACK_CLIENT_DEPLOY_VERSION}
+    restart: always
+    depends_on:
+      - gambit_core_prod
+    environment:
+      - SLACK_CLIENT_VERSION=${SLACK_CLIENT_DEPLOY_VERSION}
+      - SLACK_API_TOKEN=${PROD_SLACK_API_TOKEN}
+      - GAMBIT_CORE_URL=http://gambit_core_prod
+      - GAMBIT_CORE_PORT=8080
+
+networks:
+  gambit:
