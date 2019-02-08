@@ -20,5 +20,6 @@ mv .env.tmp .env
 echo "Tearing down old services..."
 docker-compose down -v
 echo "Starting production service..."
-docker-compose --file docker-compose-prod.yaml up -d
+# TODO separate out tools and migration one-offs from services
+docker-compose --file docker-compose-prod.yaml up -d slack-client
 echo "Successfully deployed ${SERVICE_NAME}:${DEPLOY_VERSION}"

@@ -11,8 +11,10 @@ services:
         - VERSION=${GAMBIT_CORE_VERSION}-SNAPSHOT
     image: gambit-core:${GAMBIT_CORE_VERSION}-SNAPSHOT
     restart: always
+    depends_on:
+      - gambit_db
     ports:
-      - ${GAMBIT_CORE_PORT}:8080
+      - ${GAMBIT_CORE_PORT_DEV}:8080
     environment:
       - BOT_NAME=${BOT_NAME}
 
@@ -28,10 +30,61 @@ services:
     restart: always
     depends_on:
       - gambit_core
+      - gambit_db
     environment:
       - SLACK_API_TOKEN=${DEV_SLACK_API_TOKEN}
       - GAMBIT_CORE_URL=http://gambit_core
       - GAMBIT_CORE_PORT=8080
 
+  # Postgres database
+  gambit_db:
+    networks:
+      - gambit
+      - gambit_migration
+    image: postgres:11.1
+    restart: always
+    ports:
+      - ${PG_PORT_DEV}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${PG_USER_DEV}
+      - POSTGRES_PASSWORD=${PG_PASSWORD_DEV}
+      - POSTGRES_DB=${PG_DB_DEV}
+
+  # Database flyway migrations
+  gambit_migration:
+    networks:
+      - gambit_migration
+    image: boxfuse/flyway:5.2.1
+    restart: on-failure:5  # Postgres may not be up immediately
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      - gambit_db
+    command: -url=jdbc:postgresql://gambit_db/${PG_DB_DEV} -user=${PG_USER_DEV} -password=${PG_PASSWORD_DEV} migrate
+
+  # Add Adminstrator User Tool
+  add_admin:
+    networks:
+      - gambit_migration
+    build:
+      context: ./tools/add-admin
+      args:
+        - VERSION=${ADD_ADMIN_VERSION}
+    image: add-admin:${ADD_ADMIN_VERSION}
+    restart: on-failure:5  # Postgres may not be up immediately
+    depends_on:
+      - gambit_db
+    environment:
+      - PG_URL=gambit_db
+      - PG_DB=${PG_DB_DEV}
+      - PG_USER=${PG_USER_DEV}
+      - PG_PASSWORD=${PG_PASSWORD_DEV}
+
 networks:
   gambit:
+  gambit_migration:
+
+volumes:
+  postgres_data:

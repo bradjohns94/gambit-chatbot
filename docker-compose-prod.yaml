@@ -7,8 +7,10 @@ services:
       - gambit
     image: gambit-core:${GAMBIT_CORE_DEPLOY_VERSION}
     restart: always
+    depends_on:
+      - gambit_db_prod
     ports:
-      - ${GAMBIT_CORE_PORT}:8080
+      - ${GAMBIT_CORE_PORT_PROD}:8080
     environment:
       - GAMBIT_CORE_VERSION=${GAMBIT_CORE_DEPLOY_VERSION}
       - BOT_NAME=${BOT_NAME}
@@ -21,11 +23,62 @@ services:
     restart: always
     depends_on:
       - gambit_core_prod
+      - gambit_db_prod
     environment:
       - SLACK_CLIENT_VERSION=${SLACK_CLIENT_DEPLOY_VERSION}
       - SLACK_API_TOKEN=${PROD_SLACK_API_TOKEN}
       - GAMBIT_CORE_URL=http://gambit_core_prod
       - GAMBIT_CORE_PORT=8080
 
+  # Postgres database
+  gambit_db_prod:
+    networks:
+      - gambit
+      - gambit_migration
+    image: postgres:11.1
+    restart: always
+    ports:
+      - ${PG_PORT_PROD}:5432
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${PG_USER_PROD}
+      - POSTGRES_PASSWORD=${PG_PASSWORD_PROD}
+      - POSTGRES_DB=${PG_DB_PROD}
+
+  # Database flyway migrations
+  gambit_migration_prod:
+    networks:
+      - gambit_migration
+    image: boxfuse/flyway:5.2.1
+    restart: on-failure:5  # Postgres may not be up immediately
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      - gambit_db_prod
+    command: -url=jdbc:postgresql://gambit_db_prod/${PG_DB_PROD} -user=${PG_USER_PROD} -password=${PG_PASSWORD_PROD} migrate
+
+  # Add Adminstrator User Tool
+  add_admin:
+    networks:
+      - gambit_migration
+    build:
+      context: ./tools/add-admin
+      args:
+        - VERSION=${ADD_ADMIN_VERSION}
+    image: add-admin:${ADD_ADMIN_VERSION}
+    restart: on-failure:5  # Postgres may not be up immediately
+    depends_on:
+      - gambit_db_prod
+    environment:
+      - PG_URL=gambit_db_prod
+      - PG_DB=${PG_DB_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_PASSWORD=${PG_PASSWORD_PROD}
+
 networks:
   gambit:
+  gambit_migration:
+
+volumes:
+  postgres_data_prod:
