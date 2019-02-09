@@ -76,6 +76,49 @@ services:
       - PG_USER=${PG_USER_PROD}
       - PG_PASSWORD=${PG_PASSWORD_PROD}
 
+  # Database Backup Tool
+  gambit_db_backup:
+    networks:
+      - gambit_migration
+    image: postgres:11.1
+    restart: on-failure:5  # Postgres may not be up immeditely
+    volumes:
+      - ${PG_BACKUP_DIR}:/backup/
+    depends_on:
+      - gambit_db_prod
+    command: sh -c "pg_dump -Fc -c -b -h gambit_db_prod -U $$PG_USER -d $$PG_DB -f \"/backup/$$(date +%Y-%m-%d_%T::%N.dump)\""
+    environment:
+      - PGPASSWORD=${PG_PASSWORD_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_DB=${PG_DB_PROD}
+
+  # Database Restore Tool
+  gambit_db_restore:
+    networks:
+      - gambit_migration
+    image: postgres:11.1
+    restart: on-failure:5  # Postgres may not be up immeditely
+    volumes:
+      - ${PG_BACKUP_DIR}:/backup/
+    working_dir: /backup/
+    depends_on:
+      - gambit_db_prod
+    entrypoint:
+      - "pg_restore"
+      - "-c"
+      - "-h"
+      - "gambit_db_prod"
+      - "-U"
+      - $PG_USER_PROD
+      - "-d"
+      - $PG_DB_PROD
+      - "-1"
+    environment:
+      - PGPASSWORD=${PG_PASSWORD_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_DB=${PG_DB_PROD}
+
+
 networks:
   gambit:
   gambit_migration:
