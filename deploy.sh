@@ -18,8 +18,8 @@ sed -e "s/${DEPLOY_SERVICE_NAME}=.*/${DEPLOY_SERVICE_NAME}=${DEPLOY_VERSION}/" .
 mv .env.tmp .env
 
 echo "Tearing down old services..."
-docker-compose down -v
+docker-compose down
 echo "Starting production service..."
 # TODO separate out tools and migration one-offs from services
-docker-compose --file docker-compose-prod.yaml up -d slack-client
+docker-compose --file docker-compose-prod.yaml up -d slack_client_prod
 echo "Successfully deployed ${SERVICE_NAME}:${DEPLOY_VERSION}"

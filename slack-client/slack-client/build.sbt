@@ -1,5 +1,6 @@
 val featherbedVersion = "0.3.3"
 val scalatestVersion = "3.0.5"
+val slickVersion = "3.3.0"
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 scalacOptions ++= Seq("-Xfatal-warnings", "-feature", "-language:postfixOps")
@@ -18,8 +19,11 @@ lazy val root = (project in file("."))
       "ch.qos.logback"                % "logback-classic"     % "1.1.3"          % Runtime,
       "com.github.slack-scala-client" %% "slack-scala-client" % "0.2.5",
       "com.typesafe.scala-logging"    %% "scala-logging"      % "3.9.2",
+      "com.typesafe.slick"            %% "slick"              % slickVersion,
       "io.github.finagle"             %% "featherbed-core"    % featherbedVersion,
       "io.github.finagle"             %% "featherbed-circe"   % featherbedVersion,
+      "org.postgresql"                %  "postgresql"         % "42.2.5",
+      "org.scalamock"                 %% "scalamock"          % "4.1.0"          % Test,
       "org.scalatest"                 %% "scalatest"          % scalatestVersion % Test,
       "org.slf4j"                     %  "slf4j-api"          % "1.7.25",
     )

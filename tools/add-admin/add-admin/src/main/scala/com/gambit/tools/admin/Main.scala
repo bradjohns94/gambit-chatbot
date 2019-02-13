@@ -93,7 +93,10 @@ object Main {
    */
   def makeSlackUser(slackId: String, userId: Int): Future[_] = {
     val slackUsers = TableQuery[SlackUsers]
-    db.run(slackUsers.map{user => (user.slackId, user.gambitUserId)} += (slackId, Some(userId)))
+    db.run(
+      slackUsers.map{user => (user.slackId, user.gambitUserId)}
+      insertOrUpdate (slackId, Some(userId))
+    )
   }
 
   /** Main
