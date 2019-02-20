@@ -1,6 +1,7 @@
 val finchVersion = "0.27.0"
 val circeVersion = "0.10.1"
 val scalatestVersion = "3.0.5"
+val slickVersion = "3.3.0"
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 scalacOptions ++= Seq("-Xfatal-warnings", "-feature", "-language:postfixOps")
@@ -20,7 +21,10 @@ lazy val root = (project in file("."))
       "com.github.finagle"          %% "finchx-core"    % finchVersion,
       "com.github.finagle"          %% "finchx-circe"   % finchVersion,
       "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.2",
+      "com.typesafe.slick"          %%  "slick"         % slickVersion,
       "io.circe"                    %% "circe-generic"  % circeVersion,
+      "org.postgresql"              %  "postgresql"     % "42.2.5",
+      "org.scalamock"               %% "scalamock"      % "4.1.0"          % Test,
       "org.scalatest"               %% "scalatest"      % scalatestVersion % Test
     )
   )

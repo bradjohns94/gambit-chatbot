@@ -7,38 +7,54 @@ import com.twitter.finagle.http.Status
 import io.circe.generic.auto._
 import io.finch._
 import io.finch.circe._
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, PrivateMethodTester}
 import org.scalatest.Matchers._
 
-import com.gambit.core.common.Types.{CoreMessage, CoreResponse}
+import com.gambit.core.common.{CoreMessage, CoreResponse}
+import com.gambit.core.bot.engines.MessageEngine
 
-class MessageApiTest extends FlatSpec with PrivateMethodTester {
-  // Test Post Message
+class MessageApiTest extends FlatSpec with PrivateMethodTester with MockFactory {
+  // Test the Post Message Action
   behavior of "POST /message"
 
   it should "return a ClientMessage response of engine responses" in {
-    val samplePost = Input.post("/message").withBody[Application.Json](
-      ClientMessage("user", "hi test")
-    )
-    val actual = MessageApi.postMessage(samplePost).awaitOutputUnsafe().map(_.status)
-    actual shouldEqual Some(Status.Ok)
+    val sampleClientMessage = ClientMessage("userId", "username", "message", "client")
+    val sampleCoreMessage = CoreMessage("userId", "username", "message", "client")
+    val sampleResponse = Future(Seq(
+      CoreResponse("response 1"),
+      CoreResponse("response 2")
+    ))
+
+    val mockEngine = stub[MessageEngine]
+    (mockEngine.parseMessage _) when(sampleCoreMessage) returns(sampleResponse)
+    val api = new MessageApi(mockEngine)
+
+    api.postMessageAction(sampleClientMessage).status shouldEqual Status.Ok
   }
 
   it should "return a 204 with no engine responses" in {
-    val samplePost = Input.post("/message").withBody[Application.Json](
-      ClientMessage("user", "")
-    )
-    val actual = MessageApi.postMessage(samplePost).awaitOutputUnsafe().map(_.status)
-    actual shouldEqual Some(Status.NoContent)
+    val sampleClientMessage = ClientMessage("userId", "username", "message", "client")
+    val sampleCoreMessage = CoreMessage("userId", "username", "message", "client")
+    val sampleResponse = Future(Seq.empty[CoreResponse])
+
+    val mockEngine = stub[MessageEngine]
+    (mockEngine.parseMessage _) when(sampleCoreMessage) returns(sampleResponse)
+    val api = new MessageApi(mockEngine)
+
+    api.postMessageAction(sampleClientMessage).status shouldEqual Status.NoContent
   }
 
   // Test Translate Message
   "translateMessage" should "convert an equivalent CoreMessage" in {
     val translateMessage = PrivateMethod[CoreMessage]('translateMessage)
-    val sampleMessage = ClientMessage("testUser", "test Message")
-    val actual = MessageApi invokePrivate translateMessage(sampleMessage)
-    val expected = CoreMessage("testUser", "test Message")
-    actual shouldEqual expected
+    val sampleMessage = ClientMessage("userId", "testUser", "test Message", "client")
+
+    val mockEngine = stub[MessageEngine]
+    val api = new MessageApi(mockEngine)
+
+    val expected = CoreMessage("userId", "testUser", "test Message", "client")
+    (api invokePrivate translateMessage(sampleMessage)) shouldEqual expected
   }
 
   // Test Translate Response
@@ -50,11 +66,14 @@ class MessageApiTest extends FlatSpec with PrivateMethodTester {
       CoreResponse("test response 1"),
       CoreResponse("test response 2")
     )
+
+    val mockEngine = stub[MessageEngine]
+    val api = new MessageApi(mockEngine)
+
     val expected = ClientMessageResponse(Seq(
       CoreResponse("test response 1"),
       CoreResponse("test response 2")
     ))
-    val actual = MessageApi invokePrivate translateResponse(sampleResponse)
-    actual shouldEqual expected
+    (api invokePrivate translateResponse(sampleResponse)) shouldEqual expected
   }
 }

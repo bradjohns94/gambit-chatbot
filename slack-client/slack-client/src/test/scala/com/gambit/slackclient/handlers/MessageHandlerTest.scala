@@ -12,7 +12,7 @@ class MessageHandlerTest extends FlatSpec with PrivateMethodTester {
     val translateMessage = PrivateMethod[CoreRequest]('translateMessage)
     val sampleMessage = Message(null, null, "user", "message", None, None)
     val actual = MessageHandler invokePrivate translateMessage(sampleMessage)
-    actual shouldEqual CoreRequest("<@user>", "message")
+    actual shouldEqual CoreRequest("user", "<@user>", "message", "slack")
   }
 
   // Tests for translateResponse

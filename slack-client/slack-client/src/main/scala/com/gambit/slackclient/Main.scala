@@ -73,7 +73,7 @@ object Main {
    */
   private def registerEvents(client: SlackRtmClient): ActorRef = {
     client.onEvent {
-      case message: Message => MessageHandler.processEvent(message)
+      case message: Message => MessageHandler.processEvent(client, message)
         .onSuccess{ responses => responses.foreach{ SlackMessager.send(client, _) } }
         .onFailure{ error => logger.warn(s"Failed to send response ${error}") }
       case _: ChannelJoined => db.run(UserUtils.syncUsers(usersTable, client.state.users))

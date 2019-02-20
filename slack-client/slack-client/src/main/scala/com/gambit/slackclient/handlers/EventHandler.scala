@@ -5,6 +5,7 @@ import java.net.URL
 import com.twitter.util.Future
 import featherbed.Client
 import slack.models.SlackEvent
+import slack.rtm.SlackRtmClient
 
 import com.gambit.slackclient.slackapi.SlackMessage
 
@@ -20,8 +21,9 @@ trait EventHandler[A <: SlackEvent] {
   /** Process Event
    *  Spin up an asynchronous thread to handle the incoming event and forward
    *  any potential responses to slack
+   *  @param client the client to extract any other necessary info out of
    *  @param event the event triggered from slack
    *  @return a future of any slack messages that need to be responded to
    */
-  def processEvent(event: A): Future[Seq[SlackMessage]]
+  def processEvent(client: SlackRtmClient, event: A): Future[Seq[SlackMessage]]
 }

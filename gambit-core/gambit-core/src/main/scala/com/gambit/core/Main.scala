@@ -11,8 +11,11 @@ import com.typesafe.scalalogging.Logger
 import io.finch._
 import io.finch.circe._
 import io.circe.generic.auto._
+import org.postgresql.ds.PGSimpleDataSource
+import slick.jdbc.PostgresProfile.api._
 
 import com.gambit.core.api.v1.MessageApi
+import com.gambit.core.bot.engines.{MessageEngine, MessageEngineConfig}
 
 /** Main
  *  Register all endpoints to a service definition and start the finch API
@@ -22,8 +25,32 @@ object Main extends App {
   val logger = Logger("Main")
   logger.info("Starting gambit core service...")
 
+  /** Get Database From Environment
+   *  Setup a connection to the gambit postgres database from a set of variables
+   *  stored in the system environment.
+   *  @return a slick database connection object
+   */
+  val getDatabaseFromEnvironment: Database = {
+    val dataSource = new PGSimpleDataSource()
+    dataSource.setServerName(sys.env("PG_URL"))
+    dataSource.setUser(sys.env("PG_USER"))
+    dataSource.setPassword(sys.env("PG_PASSWORD"))
+    dataSource.setDatabaseName(sys.env("PG_DB"))
+    Database.forDataSource(dataSource, None)
+  }
+
+  // Initialize the database
+  val db: Database = getDatabaseFromEnvironment
+
+  // Initialize the engine configs
+  val messageConfig = new MessageEngineConfig(db)
+  val messageEngine = new MessageEngine(messageConfig)
+
+  // Initialize the API Endpoints
+  val messageApi = new MessageApi(messageEngine)
+
   def service: Service[Request,Response] = Bootstrap
-    .serve[Application.Json](MessageApi.postMessage)
+    .serve[Application.Json](messageApi.postMessage)
     .toService
 
   Await.ready(Http.server.serve(s":8080", service))

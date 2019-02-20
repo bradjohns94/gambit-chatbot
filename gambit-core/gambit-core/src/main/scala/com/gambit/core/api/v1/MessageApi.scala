@@ -15,7 +15,7 @@ import io.finch.circe._
 
 import com.gambit.core.api.GambitEndpoint
 import com.gambit.core.bot.engines.MessageEngine
-import com.gambit.core.common.Types.{CoreMessage, CoreResponse}
+import com.gambit.core.common.{CoreMessage, CoreResponse}
 
 /** ClientMessage
  *  The expected input type for the message API to come from a client
@@ -23,8 +23,10 @@ import com.gambit.core.common.Types.{CoreMessage, CoreResponse}
  *  @param messageText the actual string of text sent in the message
  */
 final case class ClientMessage(
+  userId: String,
   username: String,
-  messageText: String
+  messageText: String,
+  client: String
 )
 
 final case class ClientMessageResponse(messages: Seq[CoreResponse])
@@ -33,7 +35,7 @@ final case class ClientMessageResponse(messages: Seq[CoreResponse])
  *  Common types and functions needed to recieve message inputs from client
  *  services and return async responses from the bot engine
  */
-object MessageApi extends GambitEndpoint[ClientMessageResponse] {
+class MessageApi(engine: MessageEngine) extends GambitEndpoint[ClientMessageResponse] {
   val logger = Logger("MessageApi")
 
   val endpoints = postMessage
@@ -43,29 +45,37 @@ object MessageApi extends GambitEndpoint[ClientMessageResponse] {
 
 
   /** Post Message
-   *  The endpoint to retrieve a message object from a client service. Takes
-   *  in a message object as JSON, parses it, and responds with any number of
-   *  responses to be run by the requesting API
+   *  The endpoint surrounding postMessageAction to be served with finch
    *  @param message the message object derived from the body of the post params
    *  @return a finch output wrapped API Message Response object
    */
   def postMessage: Endpoint[IO, ClientMessageResponse] =
-    post("message" :: jsonBody[ClientMessage]) { message: ClientMessage =>
-      val coreMessage = translateMessage(message)
-      val futureResponse = MessageEngine.parseMessage(coreMessage)
-                                        .flatMap{ response =>
-                                          Future(translateResponse(response)) }
-      Try(Await.result(futureResponse, 1 minute)) match {
-        case Success(result) => result.messages.isEmpty match {
-          case true => NoContent
-          case false => Ok(result)
-        }
-        case Failure(error) => {
-          logger.warn(s"Failed to parse message response: ${error}")
-          InternalServerError(throw(error))
-        }
+    post("message" :: jsonBody[ClientMessage]) { postMessageAction _ }
+
+  /** Post Message Action
+   *  The action to perform when the API receives a POST to the /message endpoint,
+   *  Take in a message, parse the JSON object, and respond with any successfully
+   *  matched responses from the message engine
+   *  @param message a client message object received as JSON
+   *  @return a finch output wrapped API Message Response object
+   */
+  def postMessageAction(message: ClientMessage): Output[ClientMessageResponse] = {
+    val coreMessage = translateMessage(message)
+    val futureResponse = engine.parseMessage(coreMessage)
+                               .flatMap{ response =>
+                                 Future(translateResponse(response)) }
+
+    Try(Await.result(futureResponse, 1 minute)) match {
+      case Success(result) => result.messages.isEmpty match {
+        case true => NoContent
+        case false => Ok(result)
+      }
+      case Failure(error) => {
+        logger.warn(s"Failed to parse message response: ${error}")
+        InternalServerError(throw(error))
       }
     }
+  }
 
   /** Translate Client Message
    *  Convert a client message into a core message consumed by the message
@@ -74,7 +84,12 @@ object MessageApi extends GambitEndpoint[ClientMessageResponse] {
    *  @return a core message derived from the client message
    */
   private def translateMessage(message: ClientMessage): CoreMessage =
-    CoreMessage(message.username, message.messageText)
+    CoreMessage(
+      message.userId,
+      message.username,
+      message.messageText,
+      message.client
+    )
 
   /** Translate Core Response
    *  Given a core message passed back from the message engine, convert it into

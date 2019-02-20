@@ -14,6 +14,10 @@ services:
     environment:
       - GAMBIT_CORE_VERSION=${GAMBIT_CORE_DEPLOY_VERSION}
       - BOT_NAME=${BOT_NAME}
+      - PG_URL=gambit_db_prod
+      - PG_DB=${PG_DB_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_PASSWORD=${PG_PASSWORD_PROD}
 
   # Slack Client Passthrough
   slack_client_prod:

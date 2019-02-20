@@ -8,18 +8,23 @@ import com.typesafe.scalalogging.Logger
 import featherbed.circe._
 import io.circe.generic.auto._
 import io.circe.parser.decode
-import slack.models.Message
+import slack.models.{Message, User}
+import slack.rtm.SlackRtmClient
 
 import com.gambit.slackclient.slackapi.SlackMessage
 
 /** Core Request
  *  The expected input to the gambit core API
+ *  @param userId the identifier of the user who sent the message
  *  @param username the username who sent the initial message
  *  @param messageText the actual string of text sent in the message
+ *  @param client a string identifying the requesting client
  */
 case class CoreRequest(
+  userId: String,
   username: String,
-  messageText: String
+  messageText: String,
+  client: String
 )
 
 /** Core Message
@@ -50,10 +55,11 @@ object MessageHandler extends EventHandler[Message] {
    *  Take in a message from the Slack API, forward it to the core API, and
    *  return a sequence of any number of messages that need to be sent back
    *  to slack
+   *  @param client the client to extract any other necessary info out of
    *  @param message the slack API message object received by the client
    *  @return an asynchronous list of slack messages to be sent back
    */
-  def processEvent(message: Message): Future[Seq[SlackMessage]] = {
+  def processEvent(client: SlackRtmClient, message: Message): Future[Seq[SlackMessage]] = {
     logger.info(s"Sending message: ${message.text} from user ${message.user} to the core API")
     httpClient.post("/message")
               .withContent(translateMessage(message), "application/json")
@@ -69,7 +75,7 @@ object MessageHandler extends EventHandler[Message] {
    *  @return a CoreRequest object that can be sent to the core API
    */
   private def translateMessage(message: Message): CoreRequest =
-    CoreRequest(s"<@${message.user}>", message.text) // @<> converts user ID to a name
+    CoreRequest(s"${message.user}", s"<@${message.user}>", message.text, "slack")
 
   /** Translate Response
    *  Convert a response from the core API into a message consumable by slack

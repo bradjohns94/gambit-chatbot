@@ -17,6 +17,10 @@ services:
       - ${GAMBIT_CORE_PORT_DEV}:8080
     environment:
       - BOT_NAME=${BOT_NAME}
+      - PG_URL=gambit_db
+      - PG_DB=${PG_DB_DEV}
+      - PG_USER=${PG_USER_DEV}
+      - PG_PASSWORD=${PG_PASSWORD_DEV}
 
   # Slack Client Passthrough
   slack_client:

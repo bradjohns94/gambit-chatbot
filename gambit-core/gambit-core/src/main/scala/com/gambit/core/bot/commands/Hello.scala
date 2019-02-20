@@ -1,16 +1,18 @@
 package com.gambit.core.bot.commands
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Random // TODO this is dirty and we should be using functional state
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
 
-import com.gambit.core.common.Types.{CoreMessage, CoreResponse}
+import com.gambit.core.common.{CoreMessage, CoreResponse}
 
 /** Hello Command
  *  Simple ping command to respond to friendly users who say hello
  */
-object Hello extends Command {
+class Hello extends Command {
   val logger = Logger("Hello")
 
   val help = s"Give ${botName} a friendly greeting! Simply say: 'Hi, ${botName}!'"
@@ -32,7 +34,7 @@ object Hello extends Command {
    *  @param message the CoreMessage object sent from MessageAPI
    *  @return the result of makeMessage if the message parses, otherwise None
    */
-  def runCommand(message: CoreMessage): Option[CoreResponse] =
+  def runCommand(message: CoreMessage): Future[Option[CoreResponse]] = Future(
     parse(message.messageText) match {
       case true => {
         logger.info("Message matched command: Hello")
@@ -40,6 +42,7 @@ object Hello extends Command {
       }
       case false => None
     }
+  )
 
   /** Parse
    *  Determine whether or not the provided message matches the regex pattern
