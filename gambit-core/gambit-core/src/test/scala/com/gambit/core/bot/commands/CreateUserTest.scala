@@ -1,21 +1,20 @@
 package com.gambit.core.bot.commands
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.{FlatSpec, PrivateMethodTester}
+import org.scalamock.scalatest.AsyncMockFactory
+import org.scalatest.AsyncFlatSpec
 import org.scalatest.Matchers._
 import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 import com.gambit.core.models.GambitUsersReference
 
-class CreateUserTest extends FlatSpec with PrivateMethodTester with MockFactory {
+class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
   behavior of "runCommand"
 
-  it should "return a response after successfuly creating a user" in {
+  it should "eventually return a response after successfuly creating a user" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -31,7 +30,7 @@ class CreateUserTest extends FlatSpec with PrivateMethodTester with MockFactory 
     }
   }
 
-  it should "return a response despite failing to create a user" in {
+  it should "eventually return a response despite failing to create a user" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -45,11 +44,11 @@ class CreateUserTest extends FlatSpec with PrivateMethodTester with MockFactory 
     val command = new CreateUser(mockTable)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
-      result.get.messageText shouldEqual "Failed to create user: nick"
+      result.get.messageText shouldEqual "Failed to create user nick"
     }
   }
 
-  it should "not return a response if parsing fails" in {
+  it should "never return a response if parsing fails" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",

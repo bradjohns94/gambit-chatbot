@@ -28,6 +28,11 @@ trait MessageConfig {
 case class MessageEngineConfig(db: Database) extends MessageConfig {
   private val gambitUsersTable = new GambitUsersReference(db)
 
+  // Mapping of client identifier to table reference
+  val clientMapping = Map(
+    "slack" -> new SlackUsersReference(db)
+  )
+
   // Command list for unregistered users
   val unregisteredCommands = Seq(
     new Hello
@@ -39,12 +44,8 @@ case class MessageEngineConfig(db: Database) extends MessageConfig {
 
   // Command list for administrators
   val adminCommands = Seq[Command](
-    new CreateUser(gambitUsersTable)
-  )
-
-  // Mapping of client identifier to table reference
-  val clientMapping = Map(
-    "slack" -> new SlackUsersReference(db)
+    new CreateUser(gambitUsersTable),
+    new LinkUser(clientMapping)
   )
 }
 

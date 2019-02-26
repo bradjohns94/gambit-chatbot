@@ -7,6 +7,7 @@ import com.gambit.core.common.{CoreMessage, CoreResponse}
 trait Command {
    // Require a string to explain how to use the command
    val help: String
+   val example: String
 
    val botName = sys.env("BOT_NAME")
 

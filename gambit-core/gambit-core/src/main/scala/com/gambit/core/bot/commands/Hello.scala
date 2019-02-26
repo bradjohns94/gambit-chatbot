@@ -16,6 +16,7 @@ class Hello extends Command {
   val logger = Logger("Hello")
 
   val help = s"Give ${botName} a friendly greeting! Simply say: 'Hi, ${botName}!'"
+  val example = s"Hi, ${botName}"
 
   private val greetings = Seq(
     "hi",

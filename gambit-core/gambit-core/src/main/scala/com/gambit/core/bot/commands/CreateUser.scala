@@ -2,7 +2,7 @@ package com.gambit.core.bot.commands
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
@@ -17,7 +17,14 @@ class CreateUser(usersTable: GambitUsersReference) extends Command {
   val logger = Logger("Create User")
 
   val help = s"Create a new user in the ${botName} database unlinked to any client"
+  val example = s"${botName}: create user [nickname]"
 
+  /** Run Command
+   *  Determine whether the received message matches the command and, if so, create
+   *  a new user in the gambit database with the provided nickname
+   *  @param message the received message to be parsed
+   *  @return a confirmation to the user if the command parsed
+   */
   def runCommand(message: CoreMessage): Future[Option[CoreResponse]] = {
     parse(message.messageText) match {
       case Some(nickname) => usersTable.createGambitUser(nickname).map{ _ match {

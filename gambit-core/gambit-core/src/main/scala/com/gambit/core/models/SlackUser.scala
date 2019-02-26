@@ -3,6 +3,7 @@ package com.gambit.core.models
 import java.sql.Timestamp
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.{ForeignKeyQuery, ProvenShape}
@@ -56,7 +57,31 @@ class SlackUsers(tag: Tag) extends Table[SlackUser](tag, "slack_users") {
 class SlackUsersReference(override val db: Database) extends ClientReference {
   private val slackUsers = TableQuery[SlackUsers]
 
+  /** Get User By ID
+   *  Fetch the client user object by its respective client ID
+   *  @param clientId the ID used to reference the user if they exist
+   *  @return a distinct client user
+   */
   def getUserById(clientId: String): Future[Option[ClientUser]] = db.run(
     slackUsers.filter{_.slackId === clientId}.result.map{ _.headOption }
   )
+
+  /** Set gambit user
+   *  Set the gambit user ID for the client to a given user in the gambit users table
+   *  @param clientId the ID used to reference the user if they exist
+   *  @param userId the unique identifier of the gambit user
+   *  @return the gambit user the user was linked to if successful
+   */
+  def setGambitUser(clientId: String, userId: Int): Future[Try[Int]] = {
+    val subQuery = for { user <- slackUsers if user.slackId === clientId} yield user.gambitUserId
+    db.run(subQuery.update(Some(userId)).asTry).map{ tryResult =>
+      tryResult.flatMap{ result =>
+        if (result != 1) { // Unique IDs mean 1 or 0 results
+          Failure(new IllegalArgumentException(s"User ID not found ${userId}"))
+        } else {
+          Success(result)
+        }
+      }
+    }
+  }
 }

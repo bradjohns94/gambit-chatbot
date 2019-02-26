@@ -1,5 +1,6 @@
 package com.gambit.core.models
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 import java.sql.Timestamp
@@ -67,4 +68,28 @@ class GambitUsersReference(db: Database) {
     val insertAction = userTable.map{_.nickname} returning userTable.map{_.nickname} += nickname
     db.run(insertAction.asTry)
   }
+
+  /** Get ID from nickname
+   *  Parse the human-readable nickname identifier into a machine readable ID
+   *  field for bot processing
+   *  @param nickname the nickname to resolve the ID for
+   *  @return the user ID for the user with the given nickname
+   */
+  def getIdFromNickname(nickname: String): Future[Option[Int]] = db.run(
+    userTable.filter{_.nickname === nickname}.map{_.id}.result.map{_.headOption}
+  )
+
+  /** Get Is Administrator
+   *  Get whether or not a user with a given userId is an administrator
+   *  @param userId the unique identifier of the gambit user
+   *  @return whether the user is an administrator
+   */
+  def getIsAdmin(userId: Int): Future[Boolean] = db.run(
+    userTable.filter{_.id === userId}.map{_.isAdmin}.result.map{
+      _.headOption match {
+        case Some(true) => true
+        case _ => false
+      }
+    }
+  )
 }
