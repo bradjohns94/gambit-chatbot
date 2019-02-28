@@ -40,10 +40,7 @@ class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Comm
           }
         }
       }
-      case false => {
-        logger.info("Failed to parse to Register All Users")
-        Future(None)
-      }
+      case false => Future(None)
     }
   }
 
