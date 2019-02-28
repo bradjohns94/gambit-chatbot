@@ -45,7 +45,8 @@ case class MessageEngineConfig(db: Database) extends MessageConfig {
   // Command list for administrators
   val adminCommands = Seq[Command](
     new CreateUser(gambitUsersTable),
-    new LinkUser(clientMapping)
+    new LinkUser(clientMapping),
+    new RegisterAllUsers(clientMapping)
   )
 }
 

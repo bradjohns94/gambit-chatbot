@@ -66,22 +66,21 @@ class SlackUsersReference(override val db: Database) extends ClientReference {
     slackUsers.filter{_.slackId === clientId}.result.map{ _.headOption }
   )
 
-  /** Set gambit user
+  /** Get All Unlinked Usernames
+   *  Get the unique ID of all users who aren't linked to a gambit user
+   *  @return A list of users who aren't currently linked to gambit users
+   */
+  def getAllUnlinkedIdsAction: DBIO[Seq[String]] =
+    slackUsers.filter{_.gambitUserId.isEmpty}.map{_.slackId}.result
+
+  /** Set Gambit User
    *  Set the gambit user ID for the client to a given user in the gambit users table
    *  @param clientId the ID used to reference the user if they exist
    *  @param userId the unique identifier of the gambit user
    *  @return the gambit user the user was linked to if successful
    */
-  def setGambitUser(clientId: String, userId: Int): Future[Try[Int]] = {
+  def setGambitUserAction(clientId: String, userId: Int): DBIO[Int] = {
     val subQuery = for { user <- slackUsers if user.slackId === clientId} yield user.gambitUserId
-    db.run(subQuery.update(Some(userId)).asTry).map{ tryResult =>
-      tryResult.flatMap{ result =>
-        if (result != 1) { // Unique IDs mean 1 or 0 results
-          Failure(new IllegalArgumentException(s"User ID not found ${userId}"))
-        } else {
-          Success(result)
-        }
-      }
-    }
+    subQuery.update(Some(userId))
   }
 }

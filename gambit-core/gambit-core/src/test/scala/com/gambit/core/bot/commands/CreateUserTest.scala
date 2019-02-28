@@ -22,11 +22,11 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
       "client"
     )
     val mockTable = stub[GambitUsersReference]
-    (mockTable.createGambitUser _) when("nick") returns(Future(Try("nick")))
+    (mockTable.createGambitUser _) when("nick") returns(Future(Try(1)))
     val command = new CreateUser(mockTable)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
-      result.get.messageText shouldEqual "Successfully created user: nick"
+      result.get.messageText shouldEqual "Successfully created user ID 1"
     }
   }
 

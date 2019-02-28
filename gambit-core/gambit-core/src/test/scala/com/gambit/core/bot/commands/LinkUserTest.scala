@@ -14,7 +14,7 @@ import com.gambit.core.models.ClientReference
 class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
   behavior of "runCommand"
 
-  it should "return a response after successfully linking a user" in {
+  it should "eventually return a response after successfully linking a user" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -29,15 +29,13 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
 
     val command = new LinkUser(mockMapping)
     val actual = command.runCommand(sampleMessage)
-    println("Mapping results...")
     actual.map{ result =>
-      println(s"Got result ${result.get.messageText}")
       result shouldBe a [Some[_]]
       result.get.messageText shouldEqual "Successfully linked client ID fakeId to nick"
     }
   }
 
-  it should "return a response when failing to create a user" in {
+  it should "eventually return a response when failing to create a user" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -57,7 +55,7 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     }
   }
 
-  it should "not return a response if the client is not found" in {
+  it should "eventually return a response if the client is not found" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -77,7 +75,7 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     }
   }
 
-  it should "not return a response if parsing fails" in {
+  it should "never return a response if parsing fails" in {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
@@ -85,7 +83,6 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
       "client"
     )
 
-    val mockSave = Future(Failure(new Exception("boom")))
     val mockReference = stub[ClientReference]
     val mockMapping = Map("notClient" -> mockReference)
 

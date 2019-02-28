@@ -27,14 +27,17 @@ class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
    */
   def runCommand(message: CoreMessage): Future[Option[CoreResponse]] = {
     parse(message.messageText) match {
-      case Some((clientId, nickname)) => clientMapping.get(message.client) match {
-        case Some(clientReference) => linkClientUser(clientReference, nickname, clientId)
-        case None => {
-          logger.info(s"No client reference found for client: ${message.client}")
-          val response = s"${botName} ${message.client} client does not currently support " +
-                          "linking users"
-          Future(Some(CoreResponse(response)))
-      }
+      case Some((clientId, nickname)) => {
+        logger.info("Message matched command: LinkUser")
+        clientMapping.get(message.client) match {
+          case Some(clientReference) => linkClientUser(clientReference, nickname, clientId)
+          case None => {
+            logger.info(s"No client reference found for client: ${message.client}")
+            val response = s"${botName} ${message.client} client does not currently support " +
+                            "linking users"
+            Future(Some(CoreResponse(response)))
+          }
+        }
       }
       case None => Future(None)
     }

@@ -58,16 +58,22 @@ class GambitUsers(tag: Tag) extends Table[GambitUser](tag, "gambit_users") {
 class GambitUsersReference(db: Database) {
   private val userTable = TableQuery[GambitUsers]
 
+  /** Create Gambit User Action
+   *  Create a new user from a nickname in the gambit database without actually
+   *  running the command
+   *  @param nickname the nickname of the user to be created
+   *  @return a database action resulting in the created user's nickname
+   */
+  def createGambitUserAction(nickname: String): DBIO[Int] =
+    userTable.map{_.nickname} returning userTable.map{ _.id } += nickname
+
   /** Create Gambit User
-   *  Create a non-administrative user in the gambit database with the provided
-   *  nickname
+   *  Create a new gambit user from the createGambitUserAction
    *  @param nickname the nickname of the user to be created
    *  @return unknown
    */
-  def createGambitUser(nickname: String): Future[Try[String]] = {
-    val insertAction = userTable.map{_.nickname} returning userTable.map{_.nickname} += nickname
-    db.run(insertAction.asTry)
-  }
+  def createGambitUser(nickname: String): Future[Try[Int]] =
+    db.run(createGambitUserAction(nickname).asTry)
 
   /** Get ID from nickname
    *  Parse the human-readable nickname identifier into a machine readable ID

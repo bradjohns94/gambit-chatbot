@@ -27,12 +27,15 @@ class CreateUser(usersTable: GambitUsersReference) extends Command {
    */
   def runCommand(message: CoreMessage): Future[Option[CoreResponse]] = {
     parse(message.messageText) match {
-      case Some(nickname) => usersTable.createGambitUser(nickname).map{ _ match {
-        case Success(nick) => Some(CoreResponse(s"Successfully created user: ${nick}"))
-        case Failure(err) => {
-          logger.info(s"Failed to create user due to database error: ${err.getMessage}")
-          Some(CoreResponse(s"Failed to create user ${nickname}"))
-        }}
+      case Some(nickname) => {
+        logger.info("Message matched command: CreateUser")
+        usersTable.createGambitUser(nickname).map{ _ match {
+          case Success(userId) => Some(CoreResponse(s"Successfully created user ID ${userId}"))
+          case Failure(err) => {
+            logger.info(s"Failed to create user due to database error: ${err.getMessage}")
+            Some(CoreResponse(s"Failed to create user ${nickname}"))
+          }}
+        }
       }
       case None => Future(None)
     }
