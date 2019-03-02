@@ -1,0 +1,1 @@
+ALTER TABLE aliases ALTER COLUMN aliased_name TYPE TEXT;
