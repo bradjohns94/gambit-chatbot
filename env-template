@@ -23,5 +23,12 @@ PG_PASSWORD_DEV=
 PG_DB_PROD=gambit_prod
 PG_DB_DEV=gambit_dev
 
+# Cache Configuration
+REDIS_PORT_DEV=4379
+REDIS_PORD_PROD=5379
+
 # Add Administrator Tool Configuration
 ADD_ADMIN_VERSION=0.0.1
+
+# Backup Tool Configuration
+PG_BACKUP_DIR=
