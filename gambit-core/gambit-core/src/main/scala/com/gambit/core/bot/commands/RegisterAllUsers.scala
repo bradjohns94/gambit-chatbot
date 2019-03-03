@@ -44,6 +44,12 @@ class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Comm
     }
   }
 
+  /** Register User
+   *  Helper function to register all unlinked users and return a response accordingly
+   *  with how many users were updated
+   *  @param clientReference the database helper to register users with
+   *  @return a core response to forward to the user
+   */
   private def registerUsers(clientReference: ClientReference): Future[Option[CoreResponse]] = {
     clientReference.registerUnlinkedUsers.map{ numRegistered =>
       if (numRegistered > 0) {

@@ -27,6 +27,7 @@ trait MessageConfig {
  */
 case class MessageEngineConfig(db: Database) extends MessageConfig {
   private val gambitUsersTable = new GambitUsersReference(db)
+  private val karmaTable = new KarmaReference(db)
 
   // Mapping of client identifier to table reference
   val clientMapping = Map(
@@ -35,7 +36,8 @@ case class MessageEngineConfig(db: Database) extends MessageConfig {
 
   // Command list for unregistered users
   val unregisteredCommands = Seq(
-    new Hello
+    new Hello,
+    new GetKarma(karmaTable)
   )
 
   // Command list for registered users
