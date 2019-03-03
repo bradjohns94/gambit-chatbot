@@ -4,6 +4,7 @@ import cats.effect.IO
 import io.finch.catsEffect._
 import io.circe.generic.auto._
 
+import com.redis.RedisClient
 import com.twitter.finagle.{Http, Service}
 import com.twitter.finagle.http.{Request, Response}
 import com.twitter.util.Await
@@ -42,8 +43,14 @@ object Main extends App {
   // Initialize the database
   val db: Database = getDatabaseFromEnvironment
 
+  // Initialize the redis cache
+  val redis: RedisClient = new RedisClient(
+    sys.env("REDIS_HOST"),
+    sys.env("REDIS_PORT").toInt
+  )
+
   // Initialize the engine configs
-  val messageConfig = new MessageEngineConfig(db)
+  val messageConfig = new MessageEngineConfig(db, redis)
   val messageEngine = new MessageEngine(messageConfig)
 
   // Initialize the API Endpoints
