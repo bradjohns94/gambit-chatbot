@@ -48,7 +48,7 @@ class GetKarma(karmaTable: KarmaReference) extends Command {
     val matchRegex = """(?i)^(?:%s)[:,]?\s+karma\s+%s$""".format(
       botName, KarmaConstants.karmaRegex).r
     messageText match {
-      case matchRegex(karmaEntity) => Some(karmaEntity)
+      case matchRegex(karmaEntity) => Some(karmaEntity.replace("(", "").replace(")", ""))
       case _ => None
     }
   }
