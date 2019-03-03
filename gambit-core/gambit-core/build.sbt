@@ -23,6 +23,7 @@ lazy val root = (project in file("."))
       "com.typesafe.scala-logging"  %% "scala-logging"  % "3.9.2",
       "com.typesafe.slick"          %%  "slick"         % slickVersion,
       "io.circe"                    %% "circe-generic"  % circeVersion,
+      "net.debasishg"               %% "redisclient"    % "3.9",
       "org.postgresql"              %  "postgresql"     % "42.2.5",
       "org.scalamock"               %% "scalamock"      % "4.1.0"          % Test,
       "org.scalatest"               %% "scalatest"      % scalatestVersion % Test

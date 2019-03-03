@@ -19,6 +19,8 @@ services:
       - PG_DB=${PG_DB_PROD}
       - PG_USER=${PG_USER_PROD}
       - PG_PASSWORD=${PG_PASSWORD_PROD}
+      - REDIS_HOST=gambit_cache_prod
+      - REDIS_PORT=6379
 
   # Slack Client Passthrough
   slack_client_prod:

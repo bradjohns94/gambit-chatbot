@@ -4,6 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import slick.jdbc.PostgresProfile.api.Database
 
+import com.redis.RedisClient
 import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.bot.commands._
@@ -25,7 +26,7 @@ trait MessageConfig {
  *  Copnfiguration object containing the static lists of permissioned commands
  *  @param db the database to connect to
  */
-case class MessageEngineConfig(db: Database) extends MessageConfig {
+case class MessageEngineConfig(db: Database, redis: RedisClient) extends MessageConfig {
   private val gambitUsersTable = new GambitUsersReference(db)
   private val karmaTable = new KarmaReference(db)
 
