@@ -32,6 +32,25 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     }
   }
 
+  it should "eventually return a response with trimmer parens" in {
+    val sampleMessage = CoreMessage(
+      "userId",
+      "username",
+      "test karma (foo bar)",
+      "client"
+    )
+
+    val mockReference = stub[KarmaReference]
+    (mockReference.getKarmaValue _) when("foo bar") returns(Future(42))
+
+    val command = new GetKarma(mockReference)
+    val actual = command.runCommand(sampleMessage)
+    actual.map{ result =>
+      result shouldBe a [Some[_]]
+      result.get.messageText shouldEqual "Karma for foo bar is 42"
+    }
+  }
+
   it should "never return if parsing fails" in {
     val sampleMessage = CoreMessage(
       "userId",
