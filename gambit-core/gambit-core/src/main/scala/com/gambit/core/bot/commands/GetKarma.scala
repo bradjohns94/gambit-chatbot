@@ -30,7 +30,7 @@ class GetKarma(karmaTable: KarmaReference) extends Command {
     parse(message.messageText) match {
       case Some(karmaName) => {
         logger.info("Message matched command: GetKarma")
-        karmaTable.getKarmaValue(karmaName).map{ value =>
+        karmaTable.getKarmaValue(karmaName.toLowerCase).map{ value =>
           Some(CoreResponse(s"Karma for ${karmaName} is ${value}"))
         }
       }

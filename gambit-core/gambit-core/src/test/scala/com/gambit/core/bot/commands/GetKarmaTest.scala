@@ -17,7 +17,7 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
-      "test karma thing",
+      "test karma Thing",
       "client"
     )
 
@@ -28,7 +28,7 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val actual = command.runCommand(sampleMessage)
     actual.map{ result =>
       result shouldBe a [Some[_]]
-      result.get.messageText shouldEqual "Karma for thing is 42"
+      result.get.messageText shouldEqual "Karma for Thing is 42"
     }
   }
 
@@ -36,7 +36,7 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
-      "test karma (foo bar)",
+      "test karma (foo Bar)",
       "client"
     )
 
@@ -47,7 +47,7 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val actual = command.runCommand(sampleMessage)
     actual.map{ result =>
       result shouldBe a [Some[_]]
-      result.get.messageText shouldEqual "Karma for foo bar is 42"
+      result.get.messageText shouldEqual "Karma for foo Bar is 42"
     }
   }
 
