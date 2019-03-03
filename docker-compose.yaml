@@ -13,6 +13,7 @@ services:
     restart: always
     depends_on:
       - gambit_db
+      - gambit_cache
     ports:
       - ${GAMBIT_CORE_PORT_DEV}:8080
     environment:
@@ -59,6 +60,17 @@ services:
       - POSTGRES_USER=${PG_USER_DEV}
       - POSTGRES_PASSWORD=${PG_PASSWORD_DEV}
       - POSTGRES_DB=${PG_DB_DEV}
+
+  # Redis Key/Value Cache
+  gambit_cache:
+    networks:
+      - gambit
+    image: redis:5.0.3
+    restart: always
+    ports:
+      - ${REDIS_PORT_DEV}:6379
+    volumes:
+      - redis_data:/data
 
   # Database flyway migrations
   gambit_migration:
@@ -136,3 +148,4 @@ networks:
 
 volumes:
   postgres_data:
+  redis_data:
