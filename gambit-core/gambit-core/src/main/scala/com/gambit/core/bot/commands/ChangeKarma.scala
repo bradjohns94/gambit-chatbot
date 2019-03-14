@@ -204,13 +204,15 @@ class ChangeKarma(
    *  @return the name of the entity to update karma for
    */
   private def parse(messageText: String): (Seq[String], Seq[String]) = {
-    val matchIncrement = """(?i)(\s+|^)%s\s*\+\+""".format(KarmaConstants.karmaRegex).r
-    val matchDecrement = """(?i)(\s+|^)%s\s*\-\-""".format(KarmaConstants.karmaRegex).r
-    val incNames = matchIncrement.findAllIn(messageText).map{ update =>
-      update.replace("+", "").stripSuffix(" ").stripPrefix(" ")
+    val matchIncrement = """(?i)(?=(?:\S\s+|^)(%s\s?\+\+)(?:\s+\S|$))""".format(
+      KarmaConstants.karmaRegex).r
+    val matchDecrement = """(?i)(?=(?:\S\s+|^)(%s\s?\-\-)(?:\s+\S|$))""".format(
+      KarmaConstants.karmaRegex).r
+    val incNames = matchIncrement.findAllIn(messageText).matchData.map{ update =>
+      update.group(1).replace("+", "").trim
     }.toSeq
-    val decNames = matchDecrement.findAllIn(messageText).map{ update =>
-      update.replace("-", "").stripSuffix(" ").stripPrefix(" ")
+    val decNames = matchDecrement.findAllIn(messageText).matchData.map{ update =>
+      update.group(1).replace("-", "").trim
     }.toSeq
     (incNames, decNames)
   }
