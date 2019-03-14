@@ -1,5 +1,7 @@
 package com.gambit.core.common
 
+import com.gambit.core.models.GambitUser
+
 /** Core Message
  *  A subset of fields from api.MessageAPI.ClientMessage that are used by the
  *  commands run through MessageEngine to produce a response from the bot
@@ -7,12 +9,15 @@ package com.gambit.core.common
  *  @param username the username who sent the initial message
  *  @param messageText the actual text body of the message
  *  @param client a string identifying the requesting client
+ *  @param gambitUser a gambit user that may be associated with the requesting user
  */
-case class CoreMessage(
+final case class CoreMessage(
   userId: String,
   username: String,
+  channel: String,
   messageText: String,
-  client: String
+  client: String,
+  gambitUser: Option[GambitUser]
 )
 
 /** Core Response
@@ -21,17 +26,26 @@ case class CoreMessage(
  *  client-specific information by the messaging API
  *  @param messageText the text of the response
  */
-case class CoreResponse(
-  messageText: String
+final case class CoreResponse(
+  messageText: String,
+  channel: String
 )
 
-/** Permission Level
- *  Enumeration defining the 3 levels of gambit permissions:
- *    Unregistered denotes a client user who does not have a linked gambit user
- *    Registered denotes a linked gambit user without admin privileges
- *    Administrator denotes a linked gambit user with admin privileges
+/** ClientMessage
+ *  The expected input type for the message API to come from a client
+ *  @param username the username who sent the initial message
+ *  @param messageText the actual string of text sent in the message
  */
-object PermissionLevel extends Enumeration {
-  type Level = Value
-  val Unregistered, Registered, Administrator = Value
-}
+final case class ClientMessage(
+  userId: String,
+  username: String,
+  channel: String,
+  messageText: String,
+  client: String
+)
+
+/** ClientMessageResponse
+ *  The expected output type for the message API
+ *  @param messages a sequence of response messages
+ */
+final case class ClientMessageResponse(messages: Seq[CoreResponse])

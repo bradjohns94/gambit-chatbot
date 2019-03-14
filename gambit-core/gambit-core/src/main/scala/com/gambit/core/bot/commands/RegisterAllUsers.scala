@@ -31,12 +31,12 @@ class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Comm
       case true => {
         logger.info("Message matched command: RegisterAllUsers")
         clientMapping.get(message.client) match {
-          case Some(clientReference) => registerUsers(clientReference)
+          case Some(clientReference) => registerUsers(clientReference, message.channel)
           case None => {
             logger.info(s"No client reference found for client: ${message.client}")
             val response = s"${botName} ${message.client} client does not currently support " +
                             "bulk user registration"
-            Future(Some(CoreResponse(response)))
+            Future(Some(CoreResponse(response, message.channel)))
           }
         }
       }
@@ -48,14 +48,18 @@ class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Comm
    *  Helper function to register all unlinked users and return a response accordingly
    *  with how many users were updated
    *  @param clientReference the database helper to register users with
+   *  @param channel the channel the message was sent over
    *  @return a core response to forward to the user
    */
-  private def registerUsers(clientReference: ClientReference): Future[Option[CoreResponse]] = {
+  private def registerUsers(
+    clientReference: ClientReference,
+    channel: String
+  ): Future[Option[CoreResponse]] = {
     clientReference.registerUnlinkedUsers.map{ numRegistered =>
       if (numRegistered > 0) {
-        Some(CoreResponse(s"Successfully registered ${numRegistered} users"))
+        Some(CoreResponse(s"Successfully registered ${numRegistered} users", channel))
       } else {
-        Some(CoreResponse("Failed to register any new users"))
+        Some(CoreResponse("Failed to register any new users", channel))
       }
     }
   }

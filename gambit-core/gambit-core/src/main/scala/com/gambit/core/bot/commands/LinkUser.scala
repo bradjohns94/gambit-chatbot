@@ -30,12 +30,13 @@ class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
       case Some((clientId, nickname)) => {
         logger.info("Message matched command: LinkUser")
         clientMapping.get(message.client) match {
-          case Some(clientReference) => linkClientUser(clientReference, nickname, clientId)
+          case Some(clientReference) => linkClientUser(
+            clientReference, nickname, clientId, message.channel)
           case None => {
             logger.info(s"No client reference found for client: ${message.client}")
             val response = s"${botName} ${message.client} client does not currently support " +
                             "linking users"
-            Future(Some(CoreResponse(response)))
+            Future(Some(CoreResponse(response, message.channel)))
           }
         }
       }
@@ -55,15 +56,22 @@ class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
   private def linkClientUser(
     clientReference: ClientReference,
     nickname: String,
-    clientId: String
+    clientId: String,
+    channel: String
   ): Future[Option[CoreResponse]] = {
     clientReference.setGambitUserFromNickname(clientId, nickname).map{ _ match {
       case Success(_) => {
-        Some(CoreResponse(s"Successfully linked client ID ${clientId} to ${nickname}"))
+        Some(CoreResponse(
+          s"Successfully linked client ID ${clientId} to ${nickname}",
+          channel
+        ))
       }
       case Failure(err) => {
         logger.info(s"Failed to client ID ${clientId} to ${nickname}: ${err.getMessage}")
-        Some(CoreResponse(s"Failed to link client ID ${clientId} to ${nickname}"))
+        Some(CoreResponse(
+          s"Failed to link client ID ${clientId} to ${nickname}",
+          channel
+        ))
       }
     }}
   }

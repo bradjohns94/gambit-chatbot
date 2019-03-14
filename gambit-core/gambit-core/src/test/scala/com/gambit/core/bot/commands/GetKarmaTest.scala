@@ -5,7 +5,6 @@ import scala.concurrent.Future
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.AsyncFlatSpec
 import org.scalatest.Matchers._
-import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 import com.gambit.core.models.KarmaReference
@@ -17,8 +16,10 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test karma Thing",
-      "client"
+      "client",
+      None
     )
 
     val mockReference = stub[KarmaReference]
@@ -36,8 +37,10 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test karma (foo Bar)",
-      "client"
+      "client",
+      None
     )
 
     val mockReference = stub[KarmaReference]
@@ -55,8 +58,10 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "Invalid message",
-      "client"
+      "client",
+      None
     )
     val mockReference = stub[KarmaReference]
 

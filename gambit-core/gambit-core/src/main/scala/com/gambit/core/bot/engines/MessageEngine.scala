@@ -8,7 +8,7 @@ import com.redis.RedisClient
 import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.bot.commands._
-import com.gambit.core.common.{CoreMessage, CoreResponse, PermissionLevel}
+import com.gambit.core.common.{ClientMessage, ClientMessageResponse, CoreMessage, CoreResponse}
 import com.gambit.core.models._
 
 trait MessageConfig {
@@ -28,7 +28,15 @@ trait MessageConfig {
  */
 case class MessageEngineConfig(db: Database, redis: RedisClient) extends MessageConfig {
   private val gambitUsersTable = new GambitUsersReference(db)
+  private val aliasesTable = new AliasReference(db)
   private val karmaTable = new KarmaReference(db)
+  private val redisReference = new RedisReference(redis)
+
+  private val userKarmaPerMinute = 10
+  private val channelKarmaPerMinute = 100
+  private val minuteSeconds = 60
+  private val karmaRateLimit = new ChangeKarmaRateLimitConfig(
+    userKarmaPerMinute, minuteSeconds, channelKarmaPerMinute, minuteSeconds)
 
   // Mapping of client identifier to table reference
   val clientMapping = Map(
@@ -43,6 +51,7 @@ case class MessageEngineConfig(db: Database, redis: RedisClient) extends Message
 
   // Command list for registered users
   val registeredCommands = Seq[Command](
+    new ChangeKarma(karmaTable, aliasesTable, redisReference, karmaRateLimit)
   )
 
   // Command list for administrators
@@ -68,60 +77,79 @@ class MessageEngine(config: MessageConfig) {
    *  @param message the message to be parsed and run
    *  @return a future sequence of all commands that returned a successful response
    */
-  def parseMessage(message: CoreMessage): Future[Seq[CoreResponse]] = {
+  def parseMessage(message: ClientMessage): Future[ClientMessageResponse] = {
     logger.info(s"Recieved message: ${message.messageText} from user: ${message.username}")
-    config.clientMapping.get(message.client) match {
-      case None => {
-        logger.info(s"Received message from unrecognized client type, ${message.client}")
-        Future(Seq.empty)
-      }
-      case Some(clientReference) =>
-        getPermittedCommands(clientReference, message.userId).flatMap{ enabledCommands =>
-          Future.sequence(enabledCommands.map{ _.runCommand(message) })
-                .flatMap{ maybeResponses => Future(maybeResponses.flatten) }
+    translateMessage(message).flatMap{ coreMessage =>
+      Future.sequence(
+        getPermittedCommands(coreMessage.gambitUser).map{ command =>
+          command.runCommand(coreMessage)
         }
+      ).flatMap{ maybeResponses => Future(maybeResponses.flatten)}
+    }.map{ translateResponse(_) }
+  }
+
+  /** Translate Client Message
+   *  Convert a client message into a core message consumed by the message
+   *  engine.
+   *  @param message a client message recieved from an API client
+   *  @return a core message derived from the client message
+   */
+  private def translateMessage(message: ClientMessage): Future[CoreMessage] =
+    getMessageUser(message).map{ gambitUser =>
+      CoreMessage(
+        message.userId,
+        message.username,
+        message.channel,
+        message.messageText,
+        message.client,
+        gambitUser
+      )
+    }
+
+  /** Translate Core Response
+   *  Given a core message passed back from the message engine, convert it into
+   *  a ClientMessageResponse returnable from the API
+   *  @param response a CoreResponse to translate
+   *  @return a ClientMessageResponse derived from the CoreResponse
+   */
+  private def translateResponse(responses: Seq[CoreResponse]): ClientMessageResponse =
+    ClientMessageResponse(responses)
+
+  /** Get Message User
+   *  Resolve the gambit user (if any) from the given message
+   *  @param message the client message to fetch the user from
+   *  @return the associated gambit user if one is found
+   */
+  private def getMessageUser(message: ClientMessage): Future[Option[GambitUser]] = {
+    config.clientMapping.get(message.client) match {
+      case Some(clientReference) => clientReference.getGambitUserById(message.userId)
+      case None => Future(None)
     }
   }
 
   /** Get Permitted Commands
    *  Get a list of permitted commands for a user defaulting to the unregistered
    *  command list if the user is not found
-   *  @param table a reference object to a client user table to query
-   *  @param userId the ID of the user to get commands for
+   *  @param maybeUser an option potentially containing a gambti user
    *  @return a sequnece of commands permitted to be used by the user
    */
-  private def getPermittedCommands(table: ClientReference, userId: String): Future[Seq[Command]] =
-    table.getUserById(userId).flatMap { _ match {
-      case Some(user) => getUserCommands(table, user)
-      case None => {
-        logger.info(s"Client User ${userId} was not found in the resolved client table,"
-                    + "defaulting to unregistered permissions.")
-        Future(config.unregisteredCommands)
-      }
-    }}
-
-  /** Get User Commands
-   *  Get a list of commands permitted to be used by a given user for a given client
-   *  @param table a reference object to a client user table to query
-   *  @param user the user object for the client table
-   *  @return a sequnece of commands permitted to be used by the user
-   */
-  private def getUserCommands(table: ClientReference, user: ClientUser): Future[Seq[Command]] =
-    table.getPermissionLevel(user).map{ _ match {
-      case PermissionLevel.Unregistered => {
-        logger.info(s"Gambit User ID ${user.gambitUserId} resolved as an unregistered user")
-        config.unregisteredCommands
-      }
-      case PermissionLevel.Registered => {
-        logger.info(s"Gambit User ID ${user.gambitUserId} resolved as a registered user")
-        config.unregisteredCommands ++
-        config.registeredCommands
-      }
-      case PermissionLevel.Administrator => {
-        logger.info(s"Gambit User ID ${user.gambitUserId} resolved as an administrative user")
+  private def getPermittedCommands(maybeUser: Option[GambitUser]): Seq[Command] = maybeUser match {
+    case Some(user) => user.isAdmin match {
+      case Some(true) => {
+        logger.info(s"Gambit User ID ${user.id} resolved as an administrative user")
         config.unregisteredCommands ++
         config.registeredCommands ++
         config.adminCommands
       }
-    }}
+      case _ => {
+        logger.info(s"Gambit User ID ${user.id} resolved as a registered user")
+        config.unregisteredCommands ++
+        config.registeredCommands
+      }
+    }
+    case None => {
+      logger.info(s"User resolved as an unregistered user")
+      config.unregisteredCommands
+    }
+  }
 }

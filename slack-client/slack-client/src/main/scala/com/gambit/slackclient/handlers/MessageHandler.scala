@@ -23,6 +23,7 @@ import com.gambit.slackclient.slackapi.SlackMessage
 case class CoreRequest(
   userId: String,
   username: String,
+  channel: String,
   messageText: String,
   client: String
 )
@@ -33,7 +34,8 @@ case class CoreRequest(
  *  @param messageText the text of the response message
  */
 case class CoreMessage(
-  messageText: String
+  messageText: String,
+  channel: String
 )
 
 /** Core Response
@@ -65,7 +67,7 @@ object MessageHandler extends EventHandler[Message] {
               .withContent(translateMessage(message), "application/json")
               .send[Response]()
               .map{ _.contentString }
-              .map{ convertResponse(_).map{ translateResponse(message.channel, _) } }
+              .map{ convertResponse(_).map{ translateResponse(_) } }
   }
 
   /** Translate Message
@@ -75,16 +77,15 @@ object MessageHandler extends EventHandler[Message] {
    *  @return a CoreRequest object that can be sent to the core API
    */
   private def translateMessage(message: Message): CoreRequest =
-    CoreRequest(s"${message.user}", s"<@${message.user}>", message.text, "slack")
+    CoreRequest(s"${message.user}", s"<@${message.user}>", message.channel, message.text, "slack")
 
   /** Translate Response
    *  Convert a response from the core API into a message consumable by slack
-   *  @param channel the channel to forward the response to
    *  @param message the response message from the core API
    *  @return a slack-consumable message object to be sent back
    */
-  private def translateResponse(channel: String, message: CoreMessage): SlackMessage =
-    SlackMessage(channel, message.messageText)
+  private def translateResponse(message: CoreMessage): SlackMessage =
+    SlackMessage(message.channel, message.messageText)
 
   /** Convert Response
    *  Convert the broader response object from a string buffer retrieved from

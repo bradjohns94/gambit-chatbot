@@ -62,9 +62,8 @@ class SlackUsersReference(override val db: Database) extends ClientReference {
    *  @param clientId the ID used to reference the user if they exist
    *  @return a distinct client user
    */
-  def getUserById(clientId: String): Future[Option[ClientUser]] = db.run(
+  def getUserByIdAction(clientId: String): DBIO[Option[ClientUser]] =
     slackUsers.filter{_.slackId === clientId}.result.map{ _.headOption }
-  )
 
   /** Get All Unlinked Usernames
    *  Get the unique ID of all users who aren't linked to a gambit user

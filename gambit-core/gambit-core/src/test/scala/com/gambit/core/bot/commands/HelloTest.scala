@@ -23,7 +23,9 @@ class HelloTest extends FlatSpec with PrivateMethodTester {
   behavior of "runCommand"
 
   it should "return a response for parsable messages" in {
-    val validCommands = validMessages.map{ CoreMessage("userId", "user", _, "client") }
+    val validCommands = validMessages.map{ text =>
+      CoreMessage("userId", "user", "channel", text, "client", None)
+    }
     val hello = new Hello
     validCommands.foreach{ message =>
       hello.runCommand(message).map{ result =>
@@ -33,7 +35,9 @@ class HelloTest extends FlatSpec with PrivateMethodTester {
   }
 
   it should "return None for non-matching messages" in {
-    val invalidCommands = invalidMessages.map{ CoreMessage("userId", "user", _, "client") }
+    val invalidCommands = invalidMessages.map{ text =>
+      CoreMessage("userId", "user", "channel", text, "client", None)
+    }
     val hello = new Hello
     invalidCommands.foreach{ message =>
       hello.runCommand(message).map{ result =>
@@ -61,7 +65,7 @@ class HelloTest extends FlatSpec with PrivateMethodTester {
   "makeMessage" should "respond deterministically with a seed" in {
     val makeMessage = PrivateMethod[CoreResponse]('makeMessage)
     val hello = new Hello
-    val actual = hello invokePrivate makeMessage("user", Some(1L))
-    actual shouldEqual CoreResponse("Greetings, user!")
+    val actual = hello invokePrivate makeMessage("user", "channel", Some(1L))
+    actual shouldEqual CoreResponse("Greetings, user!", "channel")
   }
 }

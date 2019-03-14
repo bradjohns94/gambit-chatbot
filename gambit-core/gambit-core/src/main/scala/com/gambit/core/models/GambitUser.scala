@@ -58,6 +58,23 @@ class GambitUsers(tag: Tag) extends Table[GambitUser](tag, "gambit_users") {
 class GambitUsersReference(db: Database) {
   private val userTable = TableQuery[GambitUsers]
 
+  /** Get User By ID
+   *  DB running wrapper around getUserByIdAction
+   *  @param userId the gambit user ID of the user to lookup
+   *  @return a reference to the gambit user object
+   */
+  def getUserById(userId: Int): Future[Option[GambitUser]] = db.run(
+    getUserByIdAction(userId)
+  )
+
+  /** Get User By ID Action
+   *  Get a gambit user case class object from the given gambit user ID
+   *  @param userId the gambit user ID of the user to lookup
+   *  @return a reference to the gambit user object
+   */
+  def getUserByIdAction(userId: Int): DBIO[Option[GambitUser]] =
+    userTable.filter{_.id === userId}.result.map{ _.headOption }
+
   /** Create Gambit User Action
    *  Create a new user from a nickname in the gambit database without actually
    *  running the command
@@ -83,19 +100,5 @@ class GambitUsersReference(db: Database) {
    */
   def getIdFromNickname(nickname: String): Future[Option[Int]] = db.run(
     userTable.filter{_.nickname === nickname}.map{_.id}.result.map{_.headOption}
-  )
-
-  /** Get Is Administrator
-   *  Get whether or not a user with a given userId is an administrator
-   *  @param userId the unique identifier of the gambit user
-   *  @return whether the user is an administrator
-   */
-  def getIsAdmin(userId: Int): Future[Boolean] = db.run(
-    userTable.filter{_.id === userId}.map{_.isAdmin}.result.map{
-      _.headOption match {
-        case Some(true) => true
-        case _ => false
-      }
-    }
   )
 }

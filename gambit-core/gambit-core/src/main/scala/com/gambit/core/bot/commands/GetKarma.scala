@@ -5,6 +5,7 @@ import scala.concurrent.Future
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
+import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.bot.commands.common.KarmaConstants
 import com.gambit.core.common.{CoreMessage, CoreResponse}
@@ -31,7 +32,7 @@ class GetKarma(karmaTable: KarmaReference) extends Command {
       case Some(karmaName) => {
         logger.info("Message matched command: GetKarma")
         karmaTable.getKarmaValue(karmaName.toLowerCase).map{ value =>
-          Some(CoreResponse(s"Karma for ${karmaName} is ${value}"))
+          Some(CoreResponse(s"Karma for ${karmaName} is ${value}", message.channel))
         }
       }
       case None => Future(None)
@@ -39,7 +40,7 @@ class GetKarma(karmaTable: KarmaReference) extends Command {
   }
 
   /** Parse
-   *  If the message provided matches the link user command, return the entity
+   *  If the message provided matches the Get Karma command, return the entity
    *  name to fetch karma for
    *  @param messageText the incoming message to parse
    *  @return the name of the entity to fetch karma for

@@ -18,8 +18,10 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test create user nick",
-      "client"
+      "client",
+      None
     )
     val mockTable = stub[GambitUsersReference]
     (mockTable.createGambitUser _) when("nick") returns(Future(Try(1)))
@@ -34,8 +36,10 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test create user nick",
-      "client"
+      "client",
+      None
     )
     val mockTable = stub[GambitUsersReference]
     (mockTable.createGambitUser _) when("nick") returns(Future(Try(
@@ -52,8 +56,10 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "not the right command",
-      "client"
+      "client",
+      None
     )
     val mockTable = stub[GambitUsersReference]
     val command = new CreateUser(mockTable)

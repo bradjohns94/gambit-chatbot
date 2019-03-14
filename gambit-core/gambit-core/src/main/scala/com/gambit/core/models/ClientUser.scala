@@ -5,9 +5,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+import slick.dbio.SuccessAction
 import slick.jdbc.PostgresProfile.api._
-
-import com.gambit.core.common.PermissionLevel
 
 /** Client User
  *  Common trait to define any table-describing case classes for what is needed
@@ -31,11 +30,45 @@ abstract trait ClientReference {
   private val gambitUsers = new GambitUsersReference(db)
 
   /** Get User By ID
+   *  DB running wrapper around getUserByIdAction
+   *  @param clientId the ID used to reference the user if they exist
+   *  @return a distinct client user
+   */
+  def getUserById(clientId: String): Future[Option[ClientUser]] = db.run(
+    getUserByIdAction(clientId)
+  )
+
+  /** Get User By ID Action
    *  Fetch the client user object by its respective client ID
    *  @param clientId the ID used to reference the user if they exist
    *  @return a distinct client user
    */
-  def getUserById(clientId: String): Future[Option[ClientUser]]
+  def getUserByIdAction(clientId: String): DBIO[Option[ClientUser]]
+
+  /** Get Gambit User By ID
+   *  DB running wrapper around getGambitUserByIdAction
+   *  @param clientId the ID of the client user
+   *  @return the associated gambit user if one is found
+   */
+  def getGambitUserById(clientId: String): Future[Option[GambitUser]] = db.run(
+    getGambitUserByIdAction(clientId)
+  )
+
+  /** Get Gambit User By ID Action
+   *  Get the gambit user associated with the client ID if any exists
+   *  @param clientId the ID of the client user
+   *  @return the associated gambit user if one is found
+   */
+  def getGambitUserByIdAction(clientId: String): DBIO[Option[GambitUser]] =
+    getUserByIdAction(clientId).flatMap{ maybeUser =>
+      maybeUser match {
+        case Some(clientUser) => clientUser.gambitUserId match {
+          case Some(userId) => gambitUsers.getUserByIdAction(userId)
+          case None => new SuccessAction(None)
+        }
+        case None => new SuccessAction(None)
+      }
+    }
 
   /** Get All Unlinked Usernames
    *  Get the unique ID of all users who aren't linked to a gambit user
@@ -111,19 +144,4 @@ abstract trait ClientReference {
       }
     }
   }
-
-  /** Get Permission Level
-   *  Given a reference to any Client User, use the associated gambit user ID
-   *  to determine the permission level of the client user
-   *  @param user a reference to a ClientUser
-   *  @return the permission level of the client user
-   */
-   def getPermissionLevel(user: ClientUser): Future[PermissionLevel.Value] =
-    user.gambitUserId match {
-      case None => Future(PermissionLevel.Unregistered)
-      case Some(userId) => gambitUsers.getIsAdmin(userId).map{ _ match {
-        case true => PermissionLevel.Administrator
-        case false => PermissionLevel.Registered
-      }}
-    }
 }

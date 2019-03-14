@@ -39,7 +39,7 @@ class Hello extends Command {
     parse(message.messageText) match {
       case true => {
         logger.info("Message matched command: Hello")
-        Some(makeMessage(message.username, None))
+        Some(makeMessage(message.username, message.channel, None))
       }
       case false => None
     }
@@ -63,14 +63,19 @@ class Hello extends Command {
    *  one off in an asynchronous thread, so state wouldn't go anywhere.
    *  @param username the username to respond to
    *  @param randomSeed the optional random seed to use (nice for testing)
+   *  @param channel the channel that the message was sent on
    *  @return a CoreMessage generated from the random seed
    */
-  private def makeMessage(username: String, randomSeed: Option[Long]): CoreResponse = {
+  private def makeMessage(
+    username: String,
+    channel: String,
+    randomSeed: Option[Long]
+  ): CoreResponse = {
     val rand = randomSeed match {
       case Some(seed) => new Random(seed)
       case None => new Random()
     }
     val randomGreeting = greetings(rand.nextInt(greetings.length))
-    CoreResponse(s"${randomGreeting}, ${username}!".capitalize)
+    CoreResponse(s"${randomGreeting}, ${username}!".capitalize, channel)
   }
 }

@@ -15,21 +15,7 @@ import io.finch.circe._
 
 import com.gambit.core.api.GambitEndpoint
 import com.gambit.core.bot.engines.MessageEngine
-import com.gambit.core.common.{CoreMessage, CoreResponse}
-
-/** ClientMessage
- *  The expected input type for the message API to come from a client
- *  @param username the username who sent the initial message
- *  @param messageText the actual string of text sent in the message
- */
-final case class ClientMessage(
-  userId: String,
-  username: String,
-  messageText: String,
-  client: String
-)
-
-final case class ClientMessageResponse(messages: Seq[CoreResponse])
+import com.gambit.core.common.{ClientMessage, ClientMessageResponse}
 
 /** Message API
  *  Common types and functions needed to recieve message inputs from client
@@ -42,7 +28,6 @@ class MessageApi(engine: MessageEngine) extends GambitEndpoint[ClientMessageResp
 
   implicit val decoder: Decoder[ClientMessage] = deriveDecoder[ClientMessage]
   implicit val encoder: Encoder[ClientMessage] = deriveEncoder[ClientMessage]
-
 
   /** Post Message
    *  The endpoint surrounding postMessageAction to be served with finch
@@ -60,10 +45,7 @@ class MessageApi(engine: MessageEngine) extends GambitEndpoint[ClientMessageResp
    *  @return a finch output wrapped API Message Response object
    */
   def postMessageAction(message: ClientMessage): Output[ClientMessageResponse] = {
-    val coreMessage = translateMessage(message)
-    val futureResponse = engine.parseMessage(coreMessage)
-                               .flatMap{ response =>
-                                 Future(translateResponse(response)) }
+    val futureResponse = engine.parseMessage(message)
 
     Try(Await.result(futureResponse, 1 minute)) match {
       case Success(result) => result.messages.isEmpty match {
@@ -76,27 +58,4 @@ class MessageApi(engine: MessageEngine) extends GambitEndpoint[ClientMessageResp
       }
     }
   }
-
-  /** Translate Client Message
-   *  Convert a client message into a core message consumed by the message
-   *  engine.
-   *  @param message a client message recieved from an API client
-   *  @return a core message derived from the client message
-   */
-  private def translateMessage(message: ClientMessage): CoreMessage =
-    CoreMessage(
-      message.userId,
-      message.username,
-      message.messageText,
-      message.client
-    )
-
-  /** Translate Core Response
-   *  Given a core message passed back from the message engine, convert it into
-   *  a ClientMessageResponse returnable from the API
-   *  @param response a CoreResponse to translate
-   *  @return a ClientMessageResponse derived from the CoreResponse
-   */
-  private def translateResponse(responses: Seq[CoreResponse]): ClientMessageResponse =
-    ClientMessageResponse(responses)
 }

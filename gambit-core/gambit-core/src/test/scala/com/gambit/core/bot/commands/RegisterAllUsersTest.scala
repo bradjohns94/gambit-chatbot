@@ -17,8 +17,10 @@ class RegisterAllUsersTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test: register all unlinked users",
-      "client"
+      "client",
+      None
     )
     val mockReference = stub[ClientReference]
     (mockReference.registerUnlinkedUsers _: () => Future[Int]) when() returns(Future(2))
@@ -35,8 +37,10 @@ class RegisterAllUsersTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test: register all unlinked users",
-      "client"
+      "client",
+      None
     )
     val mockReference = stub[ClientReference]
     (mockReference.registerUnlinkedUsers _: () => Future[Int]) when() returns(Future(0))
@@ -53,8 +57,10 @@ class RegisterAllUsersTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test: register all unlinked users",
-      "client"
+      "client",
+      None
     )
     val mockMapping: Map[String, ClientReference] = Map()
 
@@ -70,8 +76,10 @@ class RegisterAllUsersTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "Invalid message",
-      "client"
+      "client",
+      None
     )
 
     val mockReference = stub[ClientReference]

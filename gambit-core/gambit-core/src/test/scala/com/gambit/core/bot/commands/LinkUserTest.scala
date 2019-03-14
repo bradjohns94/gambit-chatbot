@@ -18,8 +18,10 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test link fakeId to nick",
-      "client"
+      "client",
+      None
     )
 
     val mockSave = Future(Success(1))
@@ -39,8 +41,10 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test link fakeId to nick",
-      "client"
+      "client",
+      None
     )
 
     val mockSave = Future(Failure(new Exception("boom")))
@@ -59,8 +63,10 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "test link fakeId to nick",
-      "client"
+      "client",
+      None
     )
 
     val mockSave = Future(Failure(new Exception("boom")))
@@ -79,8 +85,10 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
     val sampleMessage = CoreMessage(
       "userId",
       "username",
+      "channel",
       "Invalid message",
-      "client"
+      "client",
+      None
     )
 
     val mockReference = stub[ClientReference]

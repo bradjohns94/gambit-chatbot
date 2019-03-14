@@ -11,7 +11,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, PrivateMethodTester}
 import org.scalatest.Matchers._
 
-import com.gambit.core.common.{CoreMessage, CoreResponse}
+import com.gambit.core.common.{ClientMessage, ClientMessageResponse, CoreResponse}
 import com.gambit.core.bot.engines.MessageEngine
 
 class MessageApiTest extends FlatSpec with PrivateMethodTester with MockFactory {
@@ -19,61 +19,29 @@ class MessageApiTest extends FlatSpec with PrivateMethodTester with MockFactory 
   behavior of "POST /message"
 
   it should "return a ClientMessage response of engine responses" in {
-    val sampleClientMessage = ClientMessage("userId", "username", "message", "client")
-    val sampleCoreMessage = CoreMessage("userId", "username", "message", "client")
-    val sampleResponse = Future(Seq(
-      CoreResponse("response 1"),
-      CoreResponse("response 2")
-    ))
+    val sampleClientMessage = ClientMessage("userId", "username", "channel", "message", "client")
+    val sampleResponse = Future(
+      ClientMessageResponse(Seq(
+        CoreResponse("response 1", "channel"),
+        CoreResponse("response 2", "channel")
+      ))
+    )
 
     val mockEngine = stub[MessageEngine]
-    (mockEngine.parseMessage _) when(sampleCoreMessage) returns(sampleResponse)
+    (mockEngine.parseMessage _) when(sampleClientMessage) returns(sampleResponse)
     val api = new MessageApi(mockEngine)
 
     api.postMessageAction(sampleClientMessage).status shouldEqual Status.Ok
   }
 
   it should "return a 204 with no engine responses" in {
-    val sampleClientMessage = ClientMessage("userId", "username", "message", "client")
-    val sampleCoreMessage = CoreMessage("userId", "username", "message", "client")
-    val sampleResponse = Future(Seq.empty[CoreResponse])
+    val sampleClientMessage = ClientMessage("userId", "username", "channel", "message", "client")
+    val sampleResponse = Future(ClientMessageResponse(Seq.empty[CoreResponse]))
 
     val mockEngine = stub[MessageEngine]
-    (mockEngine.parseMessage _) when(sampleCoreMessage) returns(sampleResponse)
+    (mockEngine.parseMessage _) when(sampleClientMessage) returns(sampleResponse)
     val api = new MessageApi(mockEngine)
 
     api.postMessageAction(sampleClientMessage).status shouldEqual Status.NoContent
-  }
-
-  // Test Translate Message
-  "translateMessage" should "convert an equivalent CoreMessage" in {
-    val translateMessage = PrivateMethod[CoreMessage]('translateMessage)
-    val sampleMessage = ClientMessage("userId", "testUser", "test Message", "client")
-
-    val mockEngine = stub[MessageEngine]
-    val api = new MessageApi(mockEngine)
-
-    val expected = CoreMessage("userId", "testUser", "test Message", "client")
-    (api invokePrivate translateMessage(sampleMessage)) shouldEqual expected
-  }
-
-  // Test Translate Response
-  "translateResponse" should "create a single ClientMessageResponse" in {
-    val translateResponse =
-      PrivateMethod[ClientMessageResponse]('translateResponse)
-
-    val sampleResponse = Seq(
-      CoreResponse("test response 1"),
-      CoreResponse("test response 2")
-    )
-
-    val mockEngine = stub[MessageEngine]
-    val api = new MessageApi(mockEngine)
-
-    val expected = ClientMessageResponse(Seq(
-      CoreResponse("test response 1"),
-      CoreResponse("test response 2")
-    ))
-    (api invokePrivate translateResponse(sampleResponse)) shouldEqual expected
   }
 }

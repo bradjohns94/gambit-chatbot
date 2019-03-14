@@ -30,10 +30,13 @@ class CreateUser(usersTable: GambitUsersReference) extends Command {
       case Some(nickname) => {
         logger.info("Message matched command: CreateUser")
         usersTable.createGambitUser(nickname).map{ _ match {
-          case Success(userId) => Some(CoreResponse(s"Successfully created user ID ${userId}"))
+          case Success(userId) => Some(CoreResponse(
+            s"Successfully created user ID ${userId}",
+            message.channel
+          ))
           case Failure(err) => {
             logger.info(s"Failed to create user due to database error: ${err.getMessage}")
-            Some(CoreResponse(s"Failed to create user ${nickname}"))
+            Some(CoreResponse(s"Failed to create user ${nickname}", message.channel))
           }}
         }
       }
