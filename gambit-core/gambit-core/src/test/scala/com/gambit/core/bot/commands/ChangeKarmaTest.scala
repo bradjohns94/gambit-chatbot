@@ -35,7 +35,7 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     (mockRedis.incrbyex(_, _, _)) when("RateLimit:client:User:1", 1, 60) returns(Some(0))
 
     val command = new ChangeKarma(mockKarma, mockAliases, mockRedis, rateLimitConfig)
-    val expected = CoreResponse("Gave 1 karma to foo, total: 1", "channel")
+    val expected = CoreResponse("Gave 1 karma to Foo, total: 1", "channel")
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get shouldEqual expected
@@ -69,8 +69,8 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val command = new ChangeKarma(mockKarma, mockAliases, mockRedis, rateLimitConfig)
     val expected = CoreResponse(Seq(
       "username giveth and username taketh away",
-      "Gave 1 karma to bar, total: 2",
-      "Took 1 karma from baz, total: 0"
+      "Gave 1 karma to Bar, total: 2",
+      "Took 1 karma from Baz, total: 0"
     ).mkString("\n"), "channel")
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
@@ -101,7 +101,7 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     (mockRedis.incrbyex(_, _, _)) when("RateLimit:client:User:1", 1, 60) returns(Some(10))
 
     val command = new ChangeKarma(mockKarma, mockAliases, mockRedis, rateLimitConfig)
-    val expected = CoreResponse("Gave 1 karma to foo, total: 1", "channel")
+    val expected = CoreResponse("Gave 1 karma to Foo, total: 1", "channel")
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get shouldEqual expected
@@ -131,7 +131,7 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     (mockRedis.incrbyex(_, _, _)) when("RateLimit:client:User:1", 1, 60) returns(None)
 
     val command = new ChangeKarma(mockKarma, mockAliases, mockRedis, rateLimitConfig)
-    val expected = CoreResponse("Gave 1 karma to foo, total: 1", "channel")
+    val expected = CoreResponse("Gave 1 karma to Foo, total: 1", "channel")
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get shouldEqual expected

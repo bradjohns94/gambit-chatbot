@@ -167,8 +167,8 @@ class ChangeKarma(
   private def mkResponse(changes: IncMap, message: CoreMessage): Option[CoreResponse] = {
     val messages = changes.foldLeft(Seq.empty[String]) { case (state, (name, (inc, total))) =>
       val messageLine = inc match {
-        case x if x > 0 => s"Gave ${inc} karma to ${name}, total: ${total}"
-        case x if x < 0 => s"Took ${math.abs(inc)} karma from ${name}, total: ${total}"
+        case x if x > 0 => s"Gave ${inc} karma to ${name.capitalize}, total: ${total}"
+        case x if x < 0 => s"Took ${math.abs(inc)} karma from ${name.capitalize}, total: ${total}"
         case _ => s"${message.username} giveth and ${message.username} taketh away"
       }
       state :+ messageLine
@@ -209,10 +209,10 @@ class ChangeKarma(
     val matchDecrement = """(?i)(?=(?:\S\s+|^)(%s\s?\-\-)(?:\s+\S|$))""".format(
       KarmaConstants.karmaRegex).r
     val incNames = matchIncrement.findAllIn(messageText).matchData.map{ update =>
-      update.group(1).replace("+", "").trim
+      update.group(1).replace("+", "").trim.toLowerCase
     }.toSeq
     val decNames = matchDecrement.findAllIn(messageText).matchData.map{ update =>
-      update.group(1).replace("-", "").trim
+      update.group(1).replace("-", "").trim.toLowerCase
     }.toSeq
     (incNames, decNames)
   }
