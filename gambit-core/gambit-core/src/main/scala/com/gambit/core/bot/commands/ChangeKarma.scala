@@ -209,10 +209,10 @@ class ChangeKarma(
     val matchDecrement = """(?i)(?=(?:\S\s+|^)(%s\s?\-\-)(?:\s+\S|$))""".format(
       KarmaConstants.karmaRegex).r
     val incNames = matchIncrement.findAllIn(messageText).matchData.map{ update =>
-      update.group(1).replace("+", "").trim.toLowerCase
+      update.group(1).replace("+", "").replace("(", "").replace(")", "").trim.toLowerCase
     }.toSeq
     val decNames = matchDecrement.findAllIn(messageText).matchData.map{ update =>
-      update.group(1).replace("-", "").trim.toLowerCase
+      update.group(1).replace("-", "").replace("(", "").replace(")", "").trim.toLowerCase
     }.toSeq
     (incNames, decNames)
   }

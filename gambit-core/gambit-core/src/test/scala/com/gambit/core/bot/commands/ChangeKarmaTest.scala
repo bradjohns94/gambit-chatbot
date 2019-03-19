@@ -47,7 +47,7 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
       "userId",
       "username",
       "channel",
-      "foo++ bar++ baz-- foo--",
+      "foo++ (foo bar)++ baz-- Foo--",
       "client",
       Some(GambitUser(Some(1), "user", None, None, None, None))
     )
@@ -58,10 +58,10 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val mockRedis = stub[RedisReference]
     (mockKarma.getUserLinkedKarma _) when(1) returns(Future(Seq.empty[String]))
     (mockKarma.incrementKarma _) when(*) returns(
-      Future(Map("foo" -> (0, 1), "bar" -> (1, 2), "baz" -> (-1, 0)))
+      Future(Map("foo" -> (0, 1), "foo bar" -> (1, 2), "baz" -> (-1, 0)))
     )
     (mockAliases.getPrimaryName _) when("foo") returns(Future("foo"))
-    (mockAliases.getPrimaryName _) when("bar") returns(Future("bar"))
+    (mockAliases.getPrimaryName _) when("foo bar") returns(Future("foo bar"))
     (mockAliases.getPrimaryName _) when("baz") returns(Future("baz"))
     (mockRedis.incrbyex(_, _, _)) when("RateLimit:client:Channel:channel", 4, 60) returns(Some(0))
     (mockRedis.incrbyex(_, _, _)) when("RateLimit:client:User:1", 4, 60) returns(Some(0))
@@ -69,7 +69,7 @@ class ChangeKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
     val command = new ChangeKarma(mockKarma, mockAliases, mockRedis, rateLimitConfig)
     val expected = CoreResponse(Seq(
       "username giveth and username taketh away",
-      "Gave 1 karma to Bar, total: 2",
+      "Gave 1 karma to Foo bar, total: 2",
       "Took 1 karma from Baz, total: 0"
     ).mkString("\n"), "channel")
     command.runCommand(sampleMessage).map{ result =>
