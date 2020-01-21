@@ -1,16 +1,18 @@
 package com.gambit.core.bot.commands
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.matching.Regex
 
 import cats.implicits._
 import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.bot.commands.common.KarmaConstants
+import com.gambit.core.clients.{AliasClient, Karma, KarmaClient}
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.{AliasReference, KarmaReference, RedisReference}
+import com.gambit.core.models.RedisReference
 
 /** Change Karma Rate Limit Config
  *  Set of configuration params to determine how rate limiting works on the
@@ -32,8 +34,8 @@ case class ChangeKarmaRateLimitConfig(
  *  the given entity by one assuming it passes the rate limit checks
  */
 class ChangeKarma(
-  karmaTable: KarmaReference,
-  aliasTable: AliasReference,
+  aliasClient: AliasClient,
+  karmaClient: KarmaClient,
   redis: RedisReference,
   rateLimitConfig: ChangeKarmaRateLimitConfig
 ) extends Command {
@@ -62,7 +64,7 @@ class ChangeKarma(
         Future(Some(CoreResponse("Bitch be cool!", message.channel)))
       } else {
         val changeMap = mergeChanges(incNames, decNames)
-        val userId = message.gambitUser.flatMap{ _.id }
+        val userId = message.gambitUser.map{ _.userId }
         changeKarma(message, changeMap, userId)
       }
     } else {
@@ -78,7 +80,7 @@ class ChangeKarma(
    */
   private def isRateLimited(message: CoreMessage, numUpdates: Int): Boolean = {
     val userLimit = message.gambitUser.flatMap{ user =>
-      user.id.flatMap{ userId => updateUserRateLimit(userId, message.client, numUpdates) }
+      updateUserRateLimit(user.userId, message.client, numUpdates)
     }.getOrElse(false)
     val clientLimit = updateChannelRateLimit(
       message.channel, message.client, numUpdates).getOrElse(false)
@@ -134,9 +136,11 @@ class ChangeKarma(
     val merged = incMap combine decMap
     Future.sequence(
       merged.map{ case (name, inc) =>
-        aliasTable.getPrimaryName(name).map{ primaryName => (primaryName, inc) }
+        aliasClient.getPrimaryName(name).map{ maybeAlias =>
+          maybeAlias.map{ alias => (alias.primaryName, inc) }
+        }
       }
-    ).map{ _.toMap }
+    ).map{ _.flatten.toMap }
   }
 
   /** Change Karma
@@ -152,10 +156,14 @@ class ChangeKarma(
     userId: Option[Int]
   ): Future[Option[CoreResponse]] = {
     val futureChanges = userId match {
-      case Some(id) => karmaTable.incrementKarma(getModifiedUpdates(changes, id))
-      case None => karmaTable.incrementKarma(changes)
+      case Some(id) => getModifiedUpdates(changes, id)
+      case None => changes
     }
-    futureChanges.map{ mkResponse(_, message) }
+    futureChanges.flatMap{ modifiedChanges => 
+      karmaClient.updateKarma(modifiedChanges).map{ updatedKarma =>
+        mkResponse(mergeChanges(modifiedChanges, updatedKarma), message)
+      }
+    }
   }
 
   /** Make Response
@@ -164,7 +172,10 @@ class ChangeKarma(
    *  @param message the core message to respond to
    *  @return a response message
    */
-  private def mkResponse(changes: IncMap, message: CoreMessage): Option[CoreResponse] = {
+  private def mkResponse(
+    changes: IncMap,
+    message: CoreMessage
+  ): Option[CoreResponse] = {
     val messages = changes.foldLeft(Seq.empty[String]) { case (state, (name, (inc, total))) =>
       val messageLine = inc match {
         case x if x > 0 => s"Gave ${inc} karma to ${name.capitalize}, total: ${total}"
@@ -184,7 +195,8 @@ class ChangeKarma(
    *  @return a change map correcting for self-increment punishments
    */
   private def getModifiedUpdates(changes: ChangeMap, uid: Int): ChangeMap = {
-    karmaTable.getUserLinkedKarma(uid).flatMap{ linkedNames =>
+    karmaClient.getKarmaForUser(uid).flatMap{ linkedKarma =>
+      val linkedNames = linkedKarma.map{ _.name }
       changes.map{ changeMap =>
         changeMap.map{ case (name, increment) =>
           if (linkedNames.contains(name)) {
@@ -195,6 +207,18 @@ class ChangeKarma(
         }
       }
     }
+  }
+
+  /** Merge Changes
+   *  Combine the update map with the karma objects returned from the karma API into one IncMao
+   *  @param changeMap the mapping of karma names -> increments
+   *  @param updatedKarma the list of karma objects returned from the API
+   *  @return an IncMap of name -> (increment, total) for all overlapping karma
+   */
+  def mergeChanges(changeMap: Map[String, Int], updatedKarma: Seq[Karma]): IncMap = {
+    updatedKarma.foldLeft(Map.empty[String, (Option[Int], Int)]) { (merged, karma) =>
+      merged ++ Map(karma.name -> (changeMap.get(karma.name), karma.value))
+    }.collect{ case (name, (Some(inc), value)) => (name, (inc, value))}
   }
 
   /** Parse

@@ -41,6 +41,38 @@ services:
       - PG_USER=${PG_USER_PROD}
       - PG_PASSWORD=${PG_PASSWORD_PROD}
 
+  # API for karma actions
+  karma_api_prod:
+    networks:
+      - gambit
+    image: karma-api:${KARMA_API_DEPLOY_VERSION}
+    restart: always
+    depends_on:
+      - gambit_db_prod
+    ports:
+      - ${KARMA_API_PORT_PROD}:8080
+    environment:
+      - PG_URL=gambit_db_prod
+      - PG_DB=${PG_DB_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_PASSWORD=${PG_PASSWORD_PROD}
+
+  # API for karma actions
+  user_api_prod:
+    networks:
+      - gambit
+    image: user-api:${USER_API_DEPLO_VERSION}
+    restart: always
+    depends_on:
+      - gambit_db_prod
+    ports:
+      - ${USER_API_PORT_PROD}:8080
+    environment:
+      - PG_URL=gambit_db_prod
+      - PG_DB=${PG_DB_PROD}
+      - PG_USER=${PG_USER_PROD}
+      - PG_PASSWORD=${PG_PASSWORD_PROD}
+
   # Postgres database
   gambit_db_prod:
     networks:

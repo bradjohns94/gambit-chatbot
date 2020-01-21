@@ -9,7 +9,8 @@ import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.bot.commands._
 import com.gambit.core.common.{ClientMessage, ClientMessageResponse, CoreMessage, CoreResponse}
-import com.gambit.core.models._
+import com.gambit.core.clients._
+import com.gambit.core.models.RedisReference
 
 trait MessageConfig {
   // Command list for unregistered users
@@ -19,7 +20,7 @@ trait MessageConfig {
   // Command list for administrators
   val adminCommands: Seq[Command]
   // Mapping of client identifier to table reference
-  val clientMapping: Map[String, ClientReference]
+  val clientMapping: Map[String, Client]
 }
 
 /** Message Engine Config
@@ -27,9 +28,9 @@ trait MessageConfig {
  *  @param db the database to connect to
  */
 case class MessageEngineConfig(db: Database, redis: RedisClient) extends MessageConfig {
-  private val gambitUsersTable = new GambitUsersReference(db)
-  private val aliasesTable = new AliasReference(db)
-  private val karmaTable = new KarmaReference(db)
+  private val aliasClient = new AliasClient
+  private val gambitUserClient = new GambitUserClient
+  private val karmaClient = new KarmaClient
   private val redisReference = new RedisReference(redis)
 
   private val userKarmaPerMinute = 10
@@ -40,23 +41,23 @@ case class MessageEngineConfig(db: Database, redis: RedisClient) extends Message
 
   // Mapping of client identifier to table reference
   val clientMapping = Map(
-    "slack" -> new SlackUsersReference(db)
+    "slack" -> new SlackUserClient
   )
 
   // Command list for unregistered users
   val unregisteredCommands = Seq(
     new Hello,
-    new GetKarma(karmaTable)
+    new GetKarma(karmaClient)
   )
 
   // Command list for registered users
   val registeredCommands = Seq[Command](
-    new ChangeKarma(karmaTable, aliasesTable, redisReference, karmaRateLimit)
+    new ChangeKarma(aliasClient, karmaClient, redisReference, karmaRateLimit)
   )
 
   // Command list for administrators
   val adminCommands = Seq[Command](
-    new CreateUser(gambitUsersTable),
+    new CreateUser(gambitUserClient),
     new LinkUser(clientMapping),
     new RegisterAllUsers(clientMapping)
   )
@@ -135,14 +136,14 @@ class MessageEngine(config: MessageConfig) {
    */
   private def getPermittedCommands(maybeUser: Option[GambitUser]): Seq[Command] = maybeUser match {
     case Some(user) => user.isAdmin match {
-      case Some(true) => {
-        logger.info(s"Gambit User ID ${user.id} resolved as an administrative user")
+      case true => {
+        logger.info(s"Gambit User ID ${user.userId} resolved as an administrative user")
         config.unregisteredCommands ++
         config.registeredCommands ++
         config.adminCommands
       }
       case _ => {
-        logger.info(s"Gambit User ID ${user.id} resolved as a registered user")
+        logger.info(s"Gambit User ID ${user.userId} resolved as a registered user")
         config.unregisteredCommands ++
         config.registeredCommands
       }

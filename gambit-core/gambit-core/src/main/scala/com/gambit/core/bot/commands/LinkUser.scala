@@ -8,7 +8,7 @@ import scala.util.matching.Regex
 import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.ClientReference
+import com.gambit.core.clients.Client
 
 /** Link User Command
  *  Link an existing client user to a user in the gambit database
@@ -54,12 +54,12 @@ class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
    *  @return a core response with an appropriate response message
    */
   private def linkClientUser(
-    clientReference: ClientReference,
+    apiClient: Client,
     nickname: String,
     clientId: String,
     channel: String
   ): Future[Option[CoreResponse]] = {
-    clientReference.setGambitUserFromNickname(clientId, nickname).map{ _ match {
+    apiClient.setGambitUserFromNickname(clientId, nickname).map{ _ match {
       case Success(_) => {
         Some(CoreResponse(
           s"Successfully linked client ID ${clientId} to ${nickname}",

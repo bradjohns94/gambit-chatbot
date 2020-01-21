@@ -7,13 +7,13 @@ import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
 
+import com.gambit.core.clients.GambitUserClient
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.GambitUsersReference
 
 /** Create User Command
  *  Register a new user into the gambit users table
  */
-class CreateUser(usersTable: GambitUsersReference) extends Command {
+class CreateUser(userClient: GambitUserClient) extends Command {
   val logger = Logger("Create User")
 
   val help = s"Create a new user in the ${botName} database unlinked to any client"
@@ -29,13 +29,13 @@ class CreateUser(usersTable: GambitUsersReference) extends Command {
     parse(message.messageText) match {
       case Some(nickname) => {
         logger.info("Message matched command: CreateUser")
-        usersTable.createGambitUser(nickname).map{ _ match {
-          case Success(userId) => Some(CoreResponse(
+        userClient.createGambitUser(nickname).map{ _ match {
+          case Some(userId) => Some(CoreResponse(
             s"Successfully created user ID ${userId}",
             message.channel
           ))
-          case Failure(err) => {
-            logger.info(s"Failed to create user due to database error: ${err.getMessage}")
+          case None => {
+            logger.info(s"Failed to create user due to database error")
             Some(CoreResponse(s"Failed to create user ${nickname}", message.channel))
           }}
         }

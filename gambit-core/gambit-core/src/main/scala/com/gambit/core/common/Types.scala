@@ -1,6 +1,6 @@
 package com.gambit.core.common
 
-import com.gambit.core.models.GambitUser
+import com.gambit.core.clients.GambitUser
 
 /** Core Message
  *  A subset of fields from api.MessageAPI.ClientMessage that are used by the

@@ -1,6 +1,6 @@
 package com.gambit.core.bot.commands
 
-import scala.concurrent.Future
+import com.twitter.util.Future
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 

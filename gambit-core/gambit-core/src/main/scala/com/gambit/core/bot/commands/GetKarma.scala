@@ -9,13 +9,13 @@ import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.bot.commands.common.KarmaConstants
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.KarmaReference
+import com.gambit.core.clients.{Karma, KarmaClient}
 
 /** Get Karma Command
  *  Fetch and return to the user the karma value in fake internet points of a
  *  given entity in the database
  */
-class GetKarma(karmaTable: KarmaReference) extends Command {
+class GetKarma(karmaClient: KarmaClient) extends Command {
   val logger = Logger("Get Karma")
 
   val help = s"Get the associated value in fake internet points for an arbitrary name"
@@ -31,8 +31,10 @@ class GetKarma(karmaTable: KarmaReference) extends Command {
     parse(message.messageText) match {
       case Some(karmaName) => {
         logger.info("Message matched command: GetKarma")
-        karmaTable.getKarmaValue(karmaName.toLowerCase).map{ value =>
-          Some(CoreResponse(s"Karma for ${karmaName} is ${value}", message.channel))
+        karmaClient.getKarma(karmaName.toLowerCase).map{ maybeKarma =>
+          maybeKarma.map{ karma =>
+            CoreResponse(s"Karma for ${karmaName} is ${karma.value}", message.channel)
+          }
         }
       }
       case None => Future(None)
