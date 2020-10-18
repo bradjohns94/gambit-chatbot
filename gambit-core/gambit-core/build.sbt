@@ -16,7 +16,13 @@ lazy val root = (project in file("."))
     scalastyleFailOnWarning	:= true,
     compileScalastyle := scalastyle.in(Compile).toTask("").value,
     fork in Test := true,
-    envVars in Test := Map("BOT_NAME" -> "test"),
+    envVars in Test := Map(
+      "BOT_NAME" -> "test",
+      "KARMA_API_URL" -> "test",
+      "KARMA_API_PORT" -> "42",
+      "USER_API_URL" -> "test",
+      "USER_API_PORT" -> "42"
+    ),
     libraryDependencies ++= Seq(
       "ch.qos.logback"              %  "logback-classic"                  % "1.1.3"           % Runtime,
       "com.github.finagle"          %% "finchx-core"                      % finchVersion,

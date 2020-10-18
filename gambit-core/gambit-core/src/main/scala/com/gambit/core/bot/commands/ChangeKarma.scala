@@ -137,10 +137,11 @@ class ChangeKarma(
     Future.sequence(
       merged.map{ case (name, inc) =>
         aliasClient.getPrimaryName(name).map{ maybeAlias =>
-          maybeAlias.map{ alias => (alias.primaryName, inc) }
+          (maybeAlias.map{ _.primaryName }.getOrElse(name), inc)
+          // maybeAlias.map{ alias => (alias.primaryName, inc) }
         }
       }
-    ).map{ _.flatten.toMap }
+    ).map{ _.toMap }
   }
 
   /** Change Karma
@@ -159,7 +160,7 @@ class ChangeKarma(
       case Some(id) => getModifiedUpdates(changes, id)
       case None => changes
     }
-    futureChanges.flatMap{ modifiedChanges => 
+    futureChanges.flatMap{ modifiedChanges =>
       karmaClient.updateKarma(modifiedChanges).map{ updatedKarma =>
         mkResponse(mergeChanges(modifiedChanges, updatedKarma), message)
       }

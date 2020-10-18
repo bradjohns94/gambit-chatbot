@@ -9,7 +9,7 @@ import org.scalatest.Matchers._
 import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.ClientReference
+import com.gambit.core.clients.{GambitUser, GambitUserClient, User, UserClient}
 
 class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
   behavior of "runCommand"
@@ -24,12 +24,14 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockSave = Future(Success(1))
-    val mockReference = stub[ClientReference]
-    (mockReference.setGambitUserFromNickname(_, _)) when("fakeId", "nick") returns(mockSave)
-    val mockMapping = Map("client" -> mockReference)
+    val mockGambitUserClient = stub[GambitUserClient]
+    val mockUserClient = stub[UserClient]
+    (mockGambitUserClient.getGambitUserByNickname _) when("nick") returns(Future(Some(GambitUser(
+      1, "nick", false, "", None, None))))
+    (mockUserClient.setGambitUser(_, _)) when("fakeId", 1) returns(Future(Some(User("1", None))))
+    val mockMapping = Map("client" -> mockUserClient)
 
-    val command = new LinkUser(mockMapping)
+    val command = new LinkUser(mockGambitUserClient, mockMapping)
     val actual = command.runCommand(sampleMessage)
     actual.map{ result =>
       result shouldBe a [Some[_]]
@@ -47,12 +49,14 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockSave = Future(Failure(new Exception("boom")))
-    val mockReference = stub[ClientReference]
-    (mockReference.setGambitUserFromNickname(_, _)) when("fakeId", "nick") returns(mockSave)
-    val mockMapping = Map("client" -> mockReference)
+    val mockGambitUserClient = stub[GambitUserClient]
+    val mockUserClient = stub[UserClient]
+    (mockGambitUserClient.getGambitUserByNickname _) when("nick") returns(Future(Some(GambitUser(
+      1, "nick", false, "", None, None))))
+    (mockUserClient.setGambitUser(_, _)) when("fakeId", 1) returns(Future(None))
+    val mockMapping = Map("client" -> mockUserClient)
 
-    val command = new LinkUser(mockMapping)
+    val command = new LinkUser(mockGambitUserClient, mockMapping)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get.messageText shouldEqual "Failed to link client ID fakeId to nick"
@@ -69,11 +73,11 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockSave = Future(Failure(new Exception("boom")))
-    val mockReference = stub[ClientReference]
-    val mockMapping = Map("notClient" -> mockReference)
+    val mockGambitUserClient = stub[GambitUserClient]
+    val mockUserClient = stub[UserClient]
+    val mockMapping = Map("notClient" -> mockUserClient)
 
-    val command = new LinkUser(mockMapping)
+    val command = new LinkUser(mockGambitUserClient, mockMapping)
     val expectedResponse = "test client client does not currently support linking users"
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
@@ -91,10 +95,11 @@ class LinkUserTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockReference = stub[ClientReference]
-    val mockMapping = Map("notClient" -> mockReference)
+    val mockGambitUserClient = stub[GambitUserClient]
+    val mockUserClient = stub[UserClient]
+    val mockMapping = Map("notClient" -> mockUserClient)
 
-    val command = new LinkUser(mockMapping)
+    val command = new LinkUser(mockGambitUserClient, mockMapping)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe None
     }

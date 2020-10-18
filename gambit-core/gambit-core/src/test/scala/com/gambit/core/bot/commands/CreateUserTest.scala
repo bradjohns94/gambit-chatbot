@@ -9,7 +9,7 @@ import org.scalatest.Matchers._
 import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.GambitUsersReference
+import com.gambit.core.clients.{GambitUser, GambitUserClient}
 
 class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
   behavior of "runCommand"
@@ -23,9 +23,10 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
       "client",
       None
     )
-    val mockTable = stub[GambitUsersReference]
-    (mockTable.createGambitUser _) when("nick") returns(Future(Try(1)))
-    val command = new CreateUser(mockTable)
+    val mockClient = stub[GambitUserClient]
+    (mockClient.createGambitUser _) when("nick") returns(Future(Some(
+      GambitUser(1, "user", false, "", None, None))))
+    val command = new CreateUser(mockClient)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get.messageText shouldEqual "Successfully created user ID 1"
@@ -41,11 +42,9 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
       "client",
       None
     )
-    val mockTable = stub[GambitUsersReference]
-    (mockTable.createGambitUser _) when("nick") returns(Future(Try(
-      throw new Exception("failure")
-    )))
-    val command = new CreateUser(mockTable)
+    val mockClient = stub[GambitUserClient]
+    (mockClient.createGambitUser _) when("nick") returns(Future(None))
+    val command = new CreateUser(mockClient)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe a [Some[_]]
       result.get.messageText shouldEqual "Failed to create user nick"
@@ -61,8 +60,8 @@ class CreateUserTest extends AsyncFlatSpec with AsyncMockFactory {
       "client",
       None
     )
-    val mockTable = stub[GambitUsersReference]
-    val command = new CreateUser(mockTable)
+    val mockClient = stub[GambitUserClient]
+    val command = new CreateUser(mockClient)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe None
     }

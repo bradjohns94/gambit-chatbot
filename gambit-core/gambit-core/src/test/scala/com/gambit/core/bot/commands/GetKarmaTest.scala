@@ -7,7 +7,7 @@ import org.scalatest.AsyncFlatSpec
 import org.scalatest.Matchers._
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.KarmaReference
+import com.gambit.core.clients.{Karma, KarmaClient}
 
 class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
   behavior of "runCommand"
@@ -22,10 +22,10 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockReference = stub[KarmaReference]
-    (mockReference.getKarmaValue _) when("thing") returns(Future(42))
+    val mockClient = stub[KarmaClient]
+    (mockClient.getKarma _) when("thing") returns(Future(Some(Karma("thing", 42, None, None, None))))
 
-    val command = new GetKarma(mockReference)
+    val command = new GetKarma(mockClient)
     val actual = command.runCommand(sampleMessage)
     actual.map{ result =>
       result shouldBe a [Some[_]]
@@ -43,10 +43,10 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
       None
     )
 
-    val mockReference = stub[KarmaReference]
-    (mockReference.getKarmaValue _) when("foo bar") returns(Future(42))
+    val mockClient = stub[KarmaClient]
+    (mockClient.getKarma _) when("foo bar") returns(Future(Some(Karma("foo bar", 42, None, None, None))))
 
-    val command = new GetKarma(mockReference)
+    val command = new GetKarma(mockClient)
     val actual = command.runCommand(sampleMessage)
     actual.map{ result =>
       result shouldBe a [Some[_]]
@@ -63,9 +63,9 @@ class GetKarmaTest extends AsyncFlatSpec with AsyncMockFactory {
       "client",
       None
     )
-    val mockReference = stub[KarmaReference]
+    val mockClient = stub[KarmaClient]
 
-    val command = new GetKarma(mockReference)
+    val command = new GetKarma(mockClient)
     command.runCommand(sampleMessage).map{ result =>
       result shouldBe None
     }

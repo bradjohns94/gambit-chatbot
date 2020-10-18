@@ -28,7 +28,7 @@ class SlackUserApiTest extends FlatSpec with MockFactory {
   }
 
   it should "return NotFound if the ID does not exist in the database" in {
-    val mockTable = stub[SlackUserReference]
+  val mockTable = stub[SlackUserReference]
     (mockTable.getUserById _) when ("testId") returns(Future(None))
 
     val api = new SlackUserApi(mockTable)

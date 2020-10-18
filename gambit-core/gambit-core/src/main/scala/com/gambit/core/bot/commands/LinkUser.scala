@@ -8,12 +8,13 @@ import scala.util.matching.Regex
 import com.typesafe.scalalogging.Logger
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.clients.Client
+import com.gambit.core.clients.{GambitUserClient, UserClient}
+import com.gambit.core.services.UsersService
 
 /** Link User Command
  *  Link an existing client user to a user in the gambit database
  */
-class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
+class LinkUser(gambitUserClient: GambitUserClient, clientMapping: Map[String, UserClient]) extends Command {
   val logger = Logger("Link User")
 
   val help = s"Link an existing user in the ${botName} database to a specified client user"
@@ -54,20 +55,20 @@ class LinkUser(clientMapping: Map[String, ClientReference]) extends Command {
    *  @return a core response with an appropriate response message
    */
   private def linkClientUser(
-    apiClient: Client,
+    apiClient: UserClient,
     nickname: String,
     clientId: String,
     channel: String
   ): Future[Option[CoreResponse]] = {
-    apiClient.setGambitUserFromNickname(clientId, nickname).map{ _ match {
-      case Success(_) => {
+    UsersService.linkUserFromNickname(clientId, nickname, apiClient, gambitUserClient).map{ _ match {
+      case Some(_) => {
         Some(CoreResponse(
           s"Successfully linked client ID ${clientId} to ${nickname}",
           channel
         ))
       }
-      case Failure(err) => {
-        logger.info(s"Failed to client ID ${clientId} to ${nickname}: ${err.getMessage}")
+      case None => {
+        logger.info(s"Failed to client ID ${clientId} to ${nickname}")
         Some(CoreResponse(
           s"Failed to link client ID ${clientId} to ${nickname}",
           channel

@@ -30,8 +30,8 @@ class CreateUser(userClient: GambitUserClient) extends Command {
       case Some(nickname) => {
         logger.info("Message matched command: CreateUser")
         userClient.createGambitUser(nickname).map{ _ match {
-          case Some(userId) => Some(CoreResponse(
-            s"Successfully created user ID ${userId}",
+          case Some(user) => Some(CoreResponse(
+            s"Successfully created user ID ${user.userId}",
             message.channel
           ))
           case None => {

@@ -1,5 +1,6 @@
 package com.gambit.core.clients
 
+import com.softwaremill.sttp.Response
 import com.typesafe.scalalogging.Logger
 
 trait Client{

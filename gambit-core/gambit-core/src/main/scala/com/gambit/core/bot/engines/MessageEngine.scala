@@ -11,6 +11,7 @@ import com.gambit.core.bot.commands._
 import com.gambit.core.common.{ClientMessage, ClientMessageResponse, CoreMessage, CoreResponse}
 import com.gambit.core.clients._
 import com.gambit.core.models.RedisReference
+import com.gambit.core.services.UsersService
 
 trait MessageConfig {
   // Command list for unregistered users
@@ -20,7 +21,9 @@ trait MessageConfig {
   // Command list for administrators
   val adminCommands: Seq[Command]
   // Mapping of client identifier to table reference
-  val clientMapping: Map[String, Client]
+  val clientMapping: Map[String, UserClient]
+  // Client to resolve gambit users
+  val gambitUserClient: GambitUserClient
 }
 
 /** Message Engine Config
@@ -29,7 +32,6 @@ trait MessageConfig {
  */
 case class MessageEngineConfig(db: Database, redis: RedisClient) extends MessageConfig {
   private val aliasClient = new AliasClient
-  private val gambitUserClient = new GambitUserClient
   private val karmaClient = new KarmaClient
   private val redisReference = new RedisReference(redis)
 
@@ -39,8 +41,11 @@ case class MessageEngineConfig(db: Database, redis: RedisClient) extends Message
   private val karmaRateLimit = new ChangeKarmaRateLimitConfig(
     userKarmaPerMinute, minuteSeconds, channelKarmaPerMinute, minuteSeconds)
 
+  // Client to access gambit user information
+  val gambitUserClient = new GambitUserClient
+
   // Mapping of client identifier to table reference
-  val clientMapping = Map(
+  val clientMapping: Map[String, UserClient] = Map(
     "slack" -> new SlackUserClient
   )
 
@@ -58,8 +63,8 @@ case class MessageEngineConfig(db: Database, redis: RedisClient) extends Message
   // Command list for administrators
   val adminCommands = Seq[Command](
     new CreateUser(gambitUserClient),
-    new LinkUser(clientMapping),
-    new RegisterAllUsers(clientMapping)
+    new LinkUser(gambitUserClient, clientMapping),
+    new RegisterAllUsers(gambitUserClient, clientMapping)
   )
 }
 
@@ -96,7 +101,7 @@ class MessageEngine(config: MessageConfig) {
    *  @return a core message derived from the client message
    */
   private def translateMessage(message: ClientMessage): Future[CoreMessage] =
-    getMessageUser(message).map{ gambitUser =>
+    getMessageUser(config.gambitUserClient, message).map{ gambitUser =>
       CoreMessage(
         message.userId,
         message.username,
@@ -121,9 +126,9 @@ class MessageEngine(config: MessageConfig) {
    *  @param message the client message to fetch the user from
    *  @return the associated gambit user if one is found
    */
-  private def getMessageUser(message: ClientMessage): Future[Option[GambitUser]] = {
+  private def getMessageUser(gambitUserClient: GambitUserClient, message: ClientMessage): Future[Option[GambitUser]] = {
     config.clientMapping.get(message.client) match {
-      case Some(clientReference) => clientReference.getGambitUserById(message.userId)
+      case Some(client) => UsersService.getGambitUserFromClient(message.userId, client, gambitUserClient)
       case None => Future(None)
     }
   }

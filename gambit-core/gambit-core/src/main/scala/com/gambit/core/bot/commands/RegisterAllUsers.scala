@@ -6,14 +6,15 @@ import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
 
+import com.gambit.core.clients.{GambitUserClient, UserClient}
 import com.gambit.core.common.{CoreMessage, CoreResponse}
-import com.gambit.core.models.ClientReference
+import com.gambit.core.services.UsersService
 
 /** Register All Users Command
  *  Bulk create and link all users currently in the database that are not
  *  otherwise registered for the calling client
  */
-class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Command {
+class RegisterAllUsers(gambitUserClient: GambitUserClient, clientMapping: Map[String, UserClient]) extends Command {
   val logger = Logger("Register All Users")
 
   val help = s"Create a new ${botName} user for all unregistered users for the client and link " +
@@ -52,10 +53,10 @@ class RegisterAllUsers(clientMapping: Map[String, ClientReference]) extends Comm
    *  @return a core response to forward to the user
    */
   private def registerUsers(
-    clientReference: ClientReference,
+    client: UserClient,
     channel: String
   ): Future[Option[CoreResponse]] = {
-    clientReference.registerUnlinkedUsers.map{ numRegistered =>
+    UsersService.registerUnlinkedUsers(client, gambitUserClient).map{ numRegistered =>
       if (numRegistered > 0) {
         Some(CoreResponse(s"Successfully registered ${numRegistered} users", channel))
       } else {

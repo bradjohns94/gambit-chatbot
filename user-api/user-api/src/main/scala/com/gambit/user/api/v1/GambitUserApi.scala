@@ -114,6 +114,19 @@ class GambitUserApi(table: GambitUserReference) extends GambitEndpoint {
   private def createGambitUserAction(body: GambitUserBody): Future[Output[GambitUserResponse]] =
     table.createGambitUser(body.nickname).map{ user => Ok(translateGambitUser(user)) }
 
+  /** Update Gambit User Action
+   *  Helper function used by Update Gambit user to change various paramters about a gambit user
+   *  @param userId the gambit User ID to update
+   *  @param body a GambitUserBody object to update the user with
+   *  @return a future output with the updated user
+   */
+  private def updateGambitUserAction(
+    userId: String,
+    body: GambitUserBody
+  ): Future[Output[GambitUserResponse]] = {
+
+  }
+
   /** Translate Gambit User
    *  Conversion function that creates a GambitUserResponse object from the database gambit user
    *  @param row the GambitUser object returned from the database
