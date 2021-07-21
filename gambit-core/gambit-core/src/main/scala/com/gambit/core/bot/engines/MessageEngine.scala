@@ -6,6 +6,7 @@ import slick.jdbc.PostgresProfile.api.Database
 
 import com.redis.RedisClient
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import com.gambit.core.bot.commands._
 import com.gambit.core.common.{ClientMessage, ClientMessageResponse, CoreMessage, CoreResponse}
@@ -75,7 +76,7 @@ case class MessageEngineConfig(db: Database, redis: RedisClient) extends Message
  *  all that return a value from runCommand
  */
 class MessageEngine(config: MessageConfig) {
-  val logger = Logger("MessageEngine")
+  val logger = Logger(LoggerFactory.getLogger(classOf[MessageEngine]))
 
   /** Parse Message
    *  Map each command to a potential async response, then filter out any

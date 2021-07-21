@@ -6,6 +6,7 @@ import scala.util.{Failure, Success}
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 import com.gambit.core.clients.{GambitUserClient, UserClient}
@@ -15,7 +16,7 @@ import com.gambit.core.services.UsersService
  *  Link an existing client user to a user in the gambit database
  */
 class LinkUser(gambitUserClient: GambitUserClient, clientMapping: Map[String, UserClient]) extends Command {
-  val logger = Logger("Link User")
+  val logger = Logger(LoggerFactory.getLogger(classOf[LinkUser]))
 
   val help = s"Link an existing user in the ${botName} database to a specified client user"
   val example = s"${botName}: link [client ID] to [nickname]"

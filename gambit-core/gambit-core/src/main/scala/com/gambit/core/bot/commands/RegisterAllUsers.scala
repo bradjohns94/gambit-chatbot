@@ -5,6 +5,7 @@ import scala.concurrent.Future
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import com.gambit.core.clients.{GambitUserClient, UserClient}
 import com.gambit.core.common.{CoreMessage, CoreResponse}
@@ -15,7 +16,7 @@ import com.gambit.core.services.UsersService
  *  otherwise registered for the calling client
  */
 class RegisterAllUsers(gambitUserClient: GambitUserClient, clientMapping: Map[String, UserClient]) extends Command {
-  val logger = Logger("Register All Users")
+  val logger = Logger(LoggerFactory.getLogger(classOf[RegisterAllUsers]))
 
   val help = s"Create a new ${botName} user for all unregistered users for the client and link " +
              s"their client user to the created ${botName} user"

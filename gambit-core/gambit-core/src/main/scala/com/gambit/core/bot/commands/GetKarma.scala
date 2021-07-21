@@ -5,6 +5,7 @@ import scala.concurrent.Future
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 import slick.jdbc.PostgresProfile.api.Database
 
 import com.gambit.core.bot.commands.common.KarmaConstants
@@ -16,7 +17,7 @@ import com.gambit.core.clients.{Karma, KarmaClient}
  *  given entity in the database
  */
 class GetKarma(karmaClient: KarmaClient) extends Command {
-  val logger = Logger("Get Karma")
+  val logger = Logger(LoggerFactory.getLogger(classOf[GetKarma]))
 
   val help = s"Get the associated value in fake internet points for an arbitrary name"
   val example = s"${botName}: karma foo"

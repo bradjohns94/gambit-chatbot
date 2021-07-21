@@ -7,6 +7,7 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.future._
 import com.softwaremill.sttp.json4s._
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 /** Gambit User
  *  Case class describing the JSON response for Gambit Users
@@ -26,11 +27,15 @@ case class GambitUser(
   updatedAt: Option[String]
 )
 
+case class CreateGambitUserRequest(
+  nickname: String
+)
+
 /** Gambit User Client
  *  Client to communicate with the Gambit Users API
  */
 class GambitUserClient extends Client {
-  val logger = Logger("GambitUserClient")
+  val logger = Logger(LoggerFactory.getLogger(classOf[GambitUserClient]))
 
   val apiName = "Gambit User API"
   private val userApiUrl = sys.env("USER_API_URL")
@@ -68,7 +73,7 @@ class GambitUserClient extends Client {
    */
   def createGambitUser(nickname: String): Future[Option[GambitUser]] =
     sttp.post(uri"${userApiUrl}:${userApiPort}/v1/gambit-users")
-        .body(Map("nickname" -> nickname))
+        .body(CreateGambitUserRequest(nickname))
         .response(asJson[GambitUser])
         .send()
         .map{ unpackResponse[GambitUser] _ }

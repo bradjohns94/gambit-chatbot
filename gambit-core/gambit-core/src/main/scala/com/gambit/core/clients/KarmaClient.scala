@@ -7,6 +7,7 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.future._
 import com.softwaremill.sttp.json4s._
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 /** Karma Response Object
  *  API response object corresponding to a row in the karma table.
@@ -28,7 +29,7 @@ case class Karma(
  *  Client class to issue requests to the karma API.
  */
 class KarmaClient extends Client {
-  val logger = Logger("KarmaClient")
+  val logger = Logger(LoggerFactory.getLogger(classOf[KarmaClient]))
 
   val apiName = "Karma API"
   private val karmaApiUrl = sys.env("KARMA_API_URL")
@@ -70,6 +71,4 @@ class KarmaClient extends Client {
         .response(asJson[Seq[Karma]])
         .send()
         .map{ unpackResponse[Seq[Karma]](_).getOrElse(Seq.empty[Karma]) }
-
-
 }

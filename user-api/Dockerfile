@@ -7,11 +7,8 @@ ENV SRCDIR=/home/gambit/user-api
 RUN useradd -ms /bin/bash gambit
 WORKDIR $SRCDIR
 
-ADD ./user-api ${SRCDIR}
-# This is gross, but I don't want to implement real CI
-RUN sbt clean && sbt scalastyle
-RUN sbt clean && sbt assembly
+ADD ./user-api/target/scala-2.12/user-api.jar ${SRCDIR}/application.jar
 
 USER gambit
 
-CMD ["java", "-jar", "target/scala-2.12/user-api.jar"]
+CMD ["java", "-jar", "application.jar"]

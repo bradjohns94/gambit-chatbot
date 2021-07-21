@@ -13,6 +13,7 @@ import io.finch._
 import io.finch.circe._
 import io.circe.generic.auto._
 import org.postgresql.ds.PGSimpleDataSource
+import org.slf4j.LoggerFactory
 import slick.jdbc.PostgresProfile.api._
 
 import com.gambit.core.api.v1.MessageApi
@@ -23,7 +24,8 @@ import com.gambit.core.bot.engines.{MessageEngine, MessageEngineConfig}
  *  ignoring warts here because this file was created by finch
  */
 object Main extends App {
-  val logger = Logger("Main")
+  // System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "Info");
+  val logger = Logger(LoggerFactory.getLogger(Main.getClass))
   logger.info("Starting gambit core service...")
 
   /** Get Database From Environment

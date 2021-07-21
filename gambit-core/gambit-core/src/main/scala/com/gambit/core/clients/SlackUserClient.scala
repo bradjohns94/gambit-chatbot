@@ -7,6 +7,7 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.future._
 import com.softwaremill.sttp.json4s._
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 /** Slack User
  *  Case class describing the JSON response for Slack Users
@@ -36,7 +37,7 @@ case class SlackUserBody(
  *  Client to communicate with the Slack Users API
  */
 class SlackUserClient extends UserClient {
-  val logger = Logger("SlackUserClient")
+  val logger = Logger(LoggerFactory.getLogger(classOf[SlackUserClient]))
 
   val apiName = "Slack User API"
   private val userApiUrl = sys.env("USER_API_URL")

@@ -115,16 +115,26 @@ class GambitUserApi(table: GambitUserReference) extends GambitEndpoint {
     table.createGambitUser(body.nickname).map{ user => Ok(translateGambitUser(user)) }
 
   /** Update Gambit User Action
-   *  Helper function used by Update Gambit user to change various paramters about a gambit user
+   *  Helper function used by Update Gambit user to change various parameters about a gambit user
    *  @param userId the gambit User ID to update
    *  @param body a GambitUserBody object to update the user with
    *  @return a future output with the updated user
    */
   private def updateGambitUserAction(
-    userId: String,
+    userId: Int,
     body: GambitUserBody
   ): Future[Output[GambitUserResponse]] = {
-
+    table.getUserById(userId).flatMap{ maybeUser =>
+      maybeUser match {
+        case Some(user) => table.updateGambitUser(userId, mergeUser(user, body)).map{ maybeResult =>
+          maybeResult match {
+            case Some(result) => Ok(translateGambitUser(result))
+            case none => BadRequest(new Exception(s"Failed to update gambit user with ID ${userId}"))
+          }
+        }
+        case None => Future(NotFound(new Exception(s"Failed to find gambit user with ID ${userId}")))
+      }
+    }
   }
 
   /** Translate Gambit User
@@ -139,6 +149,15 @@ class GambitUserApi(table: GambitUserReference) extends GambitEndpoint {
     row.prefix.getOrElse(""),
     row.createdAt.map{_.toString},
     row.updatedAt.map{_.toString}
+  )
+
+  private def mergeUser(user: GambitUser, updates: GambitUserBody): GambitUser = new GambitUser(
+    user.id,
+    updates.nickname,
+    user.isAdmin,
+    user.prefix,
+    user.createdAt,
+    user.updatedAt
   )
 
   val endpoints = (

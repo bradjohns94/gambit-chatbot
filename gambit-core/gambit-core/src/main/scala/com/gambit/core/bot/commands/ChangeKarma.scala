@@ -13,6 +13,7 @@ import com.gambit.core.bot.commands.common.KarmaConstants
 import com.gambit.core.clients.{AliasClient, Karma, KarmaClient}
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 import com.gambit.core.models.RedisReference
+import org.slf4j.LoggerFactory
 
 /** Change Karma Rate Limit Config
  *  Set of configuration params to determine how rate limiting works on the
@@ -39,7 +40,7 @@ class ChangeKarma(
   redis: RedisReference,
   rateLimitConfig: ChangeKarmaRateLimitConfig
 ) extends Command {
-  val logger = Logger("Change Karma")
+  val logger = Logger(LoggerFactory.getLogger(classOf[ChangeKarma]))
 
   val help = s"Increment or decrement a value in the karma database by one"
   val example = "foo++ bar--"
@@ -138,7 +139,6 @@ class ChangeKarma(
       merged.map{ case (name, inc) =>
         aliasClient.getPrimaryName(name).map{ maybeAlias =>
           (maybeAlias.map{ _.primaryName }.getOrElse(name), inc)
-          // maybeAlias.map{ alias => (alias.primaryName, inc) }
         }
       }
     ).map{ _.toMap }

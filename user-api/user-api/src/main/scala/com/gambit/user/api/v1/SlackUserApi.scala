@@ -164,8 +164,8 @@ class SlackUserApi(table: SlackUserReference) extends GambitEndpoint {
   )
 
   val endpoints = (
-    getSlackUser :+:
     getUnlinkedSlackUsers :+:
+    getSlackUser :+:
     updateSlackUser :+:
     createSlackUser
   )

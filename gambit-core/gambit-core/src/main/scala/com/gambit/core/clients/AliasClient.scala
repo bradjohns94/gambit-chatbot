@@ -7,6 +7,7 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.future._
 import com.softwaremill.sttp.json4s._
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 /** Alias Response Object
  *  API response object corresponding to a row in the alias table.
@@ -17,7 +18,7 @@ import com.typesafe.scalalogging.Logger
  */
 case class Alias(
   primaryName: String,
-  aliasedName: Int,
+  aliasedName: String,
   createdAt: Option[String],
   updatedAt: Option[String]
 )
@@ -26,7 +27,7 @@ case class Alias(
  *  Client class to issue requests to the alias API.
  */
 class AliasClient extends Client {
-  val logger = Logger("AliasClient")
+  val logger = Logger(LoggerFactory.getLogger(classOf[AliasClient]))
   val apiName = "Alias API"
 
   private val karmaApiUrl = sys.env("KARMA_API_URL")

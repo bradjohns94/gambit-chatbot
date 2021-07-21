@@ -6,6 +6,7 @@ import scala.util.Random // TODO this is dirty and we should be using functional
 import scala.util.matching.Regex
 
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import com.gambit.core.common.{CoreMessage, CoreResponse}
 
@@ -13,7 +14,7 @@ import com.gambit.core.common.{CoreMessage, CoreResponse}
  *  Simple ping command to respond to friendly users who say hello
  */
 class Hello extends Command {
-  val logger = Logger("Hello")
+  val logger = Logger(LoggerFactory.getLogger(classOf[Hello]))
 
   val help = s"Give ${botName} a friendly greeting! Simply say: 'Hi, ${botName}!'"
   val example = s"Hi, ${botName}"

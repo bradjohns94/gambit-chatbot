@@ -12,8 +12,9 @@ services:
     image: gambit-core:${GAMBIT_CORE_VERSION}-SNAPSHOT
     restart: always
     depends_on:
-      - gambit_db
       - gambit_cache
+      - karma_api
+      - user_api
     ports:
       - ${GAMBIT_CORE_PORT_DEV}:8080
     environment:
@@ -24,6 +25,10 @@ services:
       - PG_PASSWORD=${PG_PASSWORD_DEV}
       - REDIS_HOST=gambit_cache
       - REDIS_PORT=6379
+      - USER_API_URL=user_api
+      - USER_API_PORT=8080
+      - KARMA_API_URL=karma_api
+      - KARMA_API_PORT=8080
 
   # Slack Client Passthrough
   slack_client:

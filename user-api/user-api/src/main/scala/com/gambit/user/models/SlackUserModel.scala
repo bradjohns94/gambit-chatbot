@@ -87,8 +87,8 @@ class SlackUserReference(override val db: Database) extends ClientReference[Slac
    *  @return the updated user
    */
   def updateUserAction(updatedUser: SlackUser): DBIO[Option[SlackUser]] = {
-    val subquery = for { user <- slackUsers if user.clientId === updatedUser.clientId } yield user
-    subquery.update(updatedUser).flatMap{
+    val subquery = for { user <- slackUsers if user.clientId === updatedUser.clientId } yield (user.clientId, user.gambitUserId)
+    subquery.update((updatedUser.clientId, updatedUser.gambitUserId)).flatMap{
       case 0 => new SuccessAction(None)
       case _ => getUserByIdAction(updatedUser.clientId)
     }
@@ -104,4 +104,11 @@ class SlackUserReference(override val db: Database) extends ClientReference[Slac
     val subQuery = for { user <- slackUsers if user.clientId === clientId} yield user.gambitUserId
     subQuery.update(Some(userId))
   }
+
+  private def mergeUsers(newUser: SlackUser, oldUser: SlackUser): SlackUser = SlackUser(
+    newUser.clientId,
+    newUser.gambitUserId.orElse(oldUser.gambitUserId),
+    newUser.createdAt.orElse(oldUser.createdAt),
+    newUser.updatedAt.orElse(oldUser.updatedAt)
+  )
 }

@@ -100,4 +100,16 @@ class GambitUserReference(db: Database) {
   def getUserByNickname(nickname: String): Future[Option[GambitUser]] = db.run(
     userTable.filter{_.nickname === nickname}.result.map{_.headOption}
   )
+
+  /** Update User
+   *  Given a userId to query by and a set of updates to perform, update a user to
+   *  match the provided user object
+   *  @param userId the gambit user ID of the user to be updated
+   *  @param body the body to update the user to
+   *  @return a future updated user if the operation was successful
+   */
+  def updateGambitUser(userId: Int, body: GambitUser): Future[Option[GambitUser]] = db.run({
+    val subQuery = for { user <- userTable if user.id === userId} yield user
+    subQuery.update(body).flatMap{ _ => getUserByIdAction(userId) }
+  })
 }
